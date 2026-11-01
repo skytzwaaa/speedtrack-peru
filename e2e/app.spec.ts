@@ -220,7 +220,7 @@ test("Auth reports specific safe errors and expired email links", async ({ page 
     ["invalid_credentials", "El correo o la contraseña no coinciden"],
     ["unexpected_failure", "No se pudo completar la operación"],
   ]) {
-    await page.route("**/auth/v1/token**", (r) => r.fulfill({ status: 400, headers: { "x-supabase-api-version": "2024-01-01" }, json: { code, msg: "private-provider-detail" } }));
+    await page.route("**/auth/v1/token**", (r) => r.fulfill({ status: 400, headers: { "x-supabase-api-version": "2024-01-01", "access-control-expose-headers": "x-supabase-api-version" }, json: { code, msg: "private-provider-detail" } }));
     await page.getByRole("button", { name: "Iniciar sesión", exact: true }).click();
     await expect(page.getByRole("status")).toContainText(message);
     await expect(page.getByRole("status")).toContainText(code);
