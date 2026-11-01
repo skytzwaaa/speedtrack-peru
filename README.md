@@ -44,18 +44,18 @@ En Windows, si PowerShell bloquea `npm.ps1`, usar `npm.cmd` y `npx.cmd`. No es n
 ## Supabase
 
 1. Crear un proyecto en Supabase.
-2. Ejecutar **completa y una sola vez** la migración `supabase/migrations/202610270001_speedtrack_v2.sql` en SQL Editor. `docs/schema.sql` solo indica dónde está el esquema vigente.
+2. Autenticar y enlazar la CLI (`npx supabase login`, `npx supabase link --project-ref TU_PROJECT_REF`), revisar `npx supabase migration list --linked` y aplicar pendientes con `npx supabase db push --linked`. La migración `202610270001_speedtrack_v2.sql` ya está aplicada al proyecto `hpcpikyxntyvpynzcvyt`; no volver a ejecutarla manualmente. `docs/schema.sql` solo indica dónde está el esquema vigente.
 3. En Authentication, activar Email/Password y confirmar el comportamiento de confirmación de correo. Configurar SMTP propio para un uso real según los límites del servicio.
 4. Configurar Site URL y Redirect URLs con la web publicada y `http://localhost:5173` para desarrollo.
 5. En `.env`, completar:
 
 ```dotenv
 VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
-VITE_SUPABASE_ANON_KEY=TU_CLAVE_PUBLICABLE_O_ANON
+VITE_SUPABASE_PUBLISHABLE_KEY=TU_CLAVE_PUBLICABLE
 VITE_AUTH_REDIRECT_URL=https://TU-WEB.vercel.app
 ```
 
-Reiniciar Vite o reconstruir después de cambiar variables. No poner una clave `service_role`, secreta o privada. Todo valor `VITE_*` se incluye en el frontend y es visible.
+Reiniciar Vite o reconstruir después de cambiar variables. Se admite `VITE_SUPABASE_ANON_KEY` como alternativa legacy. No poner una clave `service_role`, secreta o privada: el arranque y build rechazan claves privilegiadas en estas variables. Todo valor `VITE_*` se incluye en el frontend y es visible.
 
 Las tablas son `profiles`, `sessions`, `measurements`, `splits`, `events` y `user_settings`. `sessions` contiene columnas indexables y el documento completo del recorrido; las tablas hijas conservan sus datos en JSONB para mantener compatibilidad con V1. El destino y la geometría prevista viven en el documento de la sesión: no necesitan otra tabla.
 
@@ -194,6 +194,27 @@ npm audit
 - Unidades métricas en esta versión; no hay avatar subido, giro a giro, mapas descargables, comandos de voz ni seguimiento continuo con pantalla apagada. Son extensiones futuras, no funciones anunciadas como disponibles.
 
 ## Arquitectura y colaboración
+
+### Validación del proyecto real
+
+Resultados y límites de esta conexión: [validación Supabase](docs/supabase-validation.md). El APK actual incluye la configuración pública del proyecto real y conserva caché, cola y fallback local.
+
+Con la CLI autenticada, el proyecto enlazado y `.env` apuntando al mismo proyecto:
+
+```sh
+node scripts/validate-supabase.mjs --linked
+```
+
+Esta prueba crea dos usuarios temporales y elimina únicamente esos usuarios y sus datos al finalizar. Usa la clave administrativa de la CLI solo en memoria para preparar/confirmar/limpiar las cuentas; comprueba RLS usando la clave pública y los JWT de cada usuario. Verifica las seis tablas, aislamiento bidireccional, anon, escrituras ajenas, claves foráneas, rollback, reintentos, refresh, logout/login y recuperación.
+
+Para incluir Chromium con el backend real, ejecutar primero `npm run build` y `npx vite preview --host 127.0.0.1 --port 4174 --strictPort`. En otra terminal PowerShell:
+
+```powershell
+$env:SPEEDTRACK_TEST_URL='http://127.0.0.1:4174'
+node scripts/validate-supabase.mjs --linked
+```
+
+El navegador guarda una actividad y la recupera después de logout, borrado de caché y nuevo login. Los datos son sintéticos y se eliminan al finalizar. Si el registro público rechaza el destinatario ficticio o limita envíos, la prueba lo informa y prepara usuarios mediante Admin API; esto **no acredita registro público ni entrega de correo** y no modifica la configuración de confirmación de email.
 
 `pages/` y `components/` conservan las pantallas originales. `useSession` administra el ciclo de tracking y los avisos; `GpsFilter` filtra las muestras; `useActivityStore` coordina caché/outbox/nube; `useSettings` sincroniza preferencias; `useAuth` usa Supabase Auth. Servicios independientes aíslan GPS, routing, tráfico, voz, borradores y almacenamiento. Diccionarios tipados viven en `src/i18n`.
 

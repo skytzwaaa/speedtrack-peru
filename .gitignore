@@ -15,3 +15,5 @@ android/.gradle/
 *.keystore
 test-results/
 playwright-report/
+supabase/.temp/
+/debug.log

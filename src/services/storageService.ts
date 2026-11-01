@@ -55,11 +55,13 @@ export const storageService = {
         ? "speedtrack.settings.v1"
         : `speedtrack.settings.${owner}`,
     );
-    if (!raw || typeof raw !== "object") return defaultSettings;
+    if (!raw || typeof raw !== "object")
+      return { ...defaultSettings, user_id: owner };
     const s = raw as Partial<Settings>;
     return {
       ...defaultSettings,
       ...s,
+      user_id: owner,
       units: "metric",
       voice_fallback:
         s.voice_fallback === "es" || s.voice_fallback === "en"
@@ -106,10 +108,10 @@ export const storageService = {
         owner === "local-user"
           ? "speedtrack.settings.v1"
           : `speedtrack.settings.${owner}`,
-        JSON.stringify(settings),
+        JSON.stringify({ ...settings, user_id: owner }),
       );
       const user: User = {
-        id: "local-user",
+        id: owner,
         name: "",
         email: "",
         language: settings.language,

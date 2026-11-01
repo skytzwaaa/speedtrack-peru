@@ -1,8 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { supabaseConfig } from "./supabaseConfig";
+const config = supabaseConfig({
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+});
 // Only a publishable/anon key belongs in this bundle. RLS is the security boundary.
-export const supabase = url && key ? createClient(url, key) : null;
+export const supabase = config
+  ? createClient(config.url, config.key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : null;
 export const authRedirect =
   import.meta.env.VITE_AUTH_REDIRECT_URL ||
   (typeof window !== "undefined"

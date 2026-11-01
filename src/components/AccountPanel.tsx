@@ -177,7 +177,7 @@ export function AccountPanel({
             onClick={async () => {
               setBusy(true);
               try {
-                const { error } = await supabase!.auth.signOut();
+                const { error } = await supabase!.auth.signOut({ scope: "local" });
                 if (error) throw error;
               } catch {
                 setMessage(t("accountError"));

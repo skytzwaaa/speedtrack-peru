@@ -16,6 +16,7 @@ export default defineConfig({
     reuseExistingServer: false,
     env: {
       VITE_SUPABASE_URL: "https://speedtrack-test.supabase.co",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "public-test-placeholder",
       VITE_SUPABASE_ANON_KEY: "public-test-placeholder",
       VITE_ROUTING_URL: "https://api.openrouteservice.org",
       VITE_ROUTING_API_KEY: "public-routing-test-placeholder",

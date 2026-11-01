@@ -1,12 +1,18 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => (id.includes("recharts") ? "charts" : undefined),
+import { supabaseConfig } from "./src/services/supabaseConfig";
+export default defineConfig(({ mode }) => {
+  // Fail before bundling a privileged key into web assets or the APK.
+  supabaseConfig(loadEnv(mode, process.cwd(), "VITE_"));
+  return {
+    plugins: [react()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: (id) =>
+            id.includes("recharts") ? "charts" : undefined,
+        },
       },
     },
-  },
+  };
 });
