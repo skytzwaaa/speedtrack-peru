@@ -1,8 +1,11 @@
 name: SpeedTrack checks
 on:
   push:
-    branches: [feature/speedtrack-v2]
+    branches: [main, feature/speedtrack-v2, feature/speedtrack-mejoras-paralelas]
   pull_request:
+    branches: [main, feature/speedtrack-v2, feature/speedtrack-mejoras-paralelas]
+permissions:
+  contents: read
 jobs:
   web:
     runs-on: ubuntu-latest
@@ -13,6 +16,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run typecheck
       - run: npm run build
       - run: npm run lint
       - run: npm test
