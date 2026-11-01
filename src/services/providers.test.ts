@@ -49,3 +49,28 @@ it("routing without a key does not produce a false navigable straight line", asy
     "routingUnavailable",
   );
 });
+it("searches the HeiGIT Pelias endpoint independently of the routing URL", async () => {
+  vi.stubEnv("VITE_ROUTING_API_KEY", "test-key");
+  vi.stubEnv("VITE_ROUTING_URL", "https://example.test/routing");
+  vi.stubEnv("VITE_GEOCODING_URL", "");
+  vi.resetModules();
+  const fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      features: [
+        {
+          geometry: { coordinates: [-77, -12] },
+          properties: { label: "Lima" },
+        },
+      ],
+    }),
+  });
+  vi.stubGlobal("fetch", fetch);
+  const { searchDestinations } = await import("./routingService");
+  expect(await searchDestinations("Lima")).toEqual([
+    { name: "Lima", coordinate: [-77, -12] },
+  ]);
+  expect(fetch.mock.calls[0][0]).toBe(
+    "https://api.heigit.org/pelias/v1/search?text=Lima&size=5",
+  );
+});
