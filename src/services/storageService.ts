@@ -8,6 +8,7 @@ export const defaultSettings: Settings = {
   units: "metric",
   voice_enabled: false,
   voice_language: "es",
+  voice_fallback: "es",
   voice_volume: 0.8,
   kilometer_alerts: true,
   safety_alerts: true,
@@ -64,9 +65,9 @@ export const storageService = {
       user_id: owner,
       units: "metric",
       voice_fallback:
-        s.voice_fallback === "es" || s.voice_fallback === "en"
+        s.voice_fallback === "es" || s.voice_fallback === "en" || s.voice_fallback === "off"
           ? s.voice_fallback
-          : "off",
+          : "es",
       progress_alerts: s.progress_alerts === true,
       voice_volume:
         typeof s.voice_volume === "number" && Number.isFinite(s.voice_volume)

@@ -105,7 +105,7 @@ La cartografía usa `https://tiles.openfreemap.org/styles/liberty`, con atribuci
 El mapa y el registro no necesitan clave de rutas. Para calcular caminos y habilitar búsqueda de destinos, configurar un proveedor compatible con **OpenRouteService**:
 
 ```dotenv
-VITE_ROUTING_URL=https://api.openrouteservice.org
+VITE_ROUTING_URL=https://api.heigit.org/openrouteservice
 VITE_ROUTING_API_KEY=TU_CLAVE_PUBLICA_RESTRINGIDA
 ```
 

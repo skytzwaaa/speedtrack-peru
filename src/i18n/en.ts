@@ -1,5 +1,35 @@
 import type { es } from "./es";
 export const en: Record<keyof typeof es, string> = {
+  authEmailExists:
+    "This email is already registered. Sign in or reset your password.",
+  authEmailInvalid: "Enter a valid email address you can access.",
+  authPasswordInvalid:
+    "The password does not meet the requirements. Use at least 8 characters and combine letters, numbers and symbols.",
+  authPasswordSame: "Choose a password different from your previous one.",
+  authConfirmationPending:
+    "Confirm your email before signing in. Check spam too.",
+  authCredentialsInvalid:
+    "The email or password is incorrect. Check your details or reset your password.",
+  authRateLimit:
+    "Too many attempts or emails. Wait a few minutes before trying again.",
+  authNetwork:
+    "Could not connect. Check your Internet connection and try again. Your local activities remain available.",
+  authConfiguration:
+    "Account access is not configured correctly. Contact the app administrator.",
+  authMailConfiguration:
+    "The email service cannot send this message yet. The administrator needs to review the app's email configuration.",
+  authLinkExpired:
+    "This link expired, was already used or belongs to another browser. Request a new one and open it on the device where you requested it.",
+  authUnknown:
+    "Could not complete the operation. Try again; if it persists, share the error reference with the administrator.",
+  authReference: "Reference: {code} ({status})",
+  authSignupSent:
+    "Check your email to confirm your account. If you already had an account, sign in or reset your password.",
+  authRecoverySent:
+    "If an account exists for this email, you will receive a password reset link. Check spam too.",
+  authPasswordUpdated:
+    "Password updated. You can now sign in with your new password.",
+  authConfirmed: "Email confirmed. Your session is ready.",
   routeOptions: "Route options",
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",

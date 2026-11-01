@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { supabaseConfig } from "./supabaseConfig";
+import { Capacitor } from "@capacitor/core";
+import { nativeAuthRedirect } from "./authCallback";
 const config = supabaseConfig({
   VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
   VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
@@ -15,8 +17,9 @@ export const supabase = config
       },
     })
   : null;
-export const authRedirect =
-  import.meta.env.VITE_AUTH_REDIRECT_URL ||
-  (typeof window !== "undefined"
-    ? window.location.origin
-    : "http://localhost:5173");
+export const authRedirect = Capacitor.isNativePlatform()
+  ? nativeAuthRedirect
+  : import.meta.env.VITE_AUTH_REDIRECT_URL ||
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "http://localhost:5173");

@@ -165,7 +165,7 @@ test("registration and password recovery forms use Supabase Auth contracts", asy
     .getByLabel("Contraseña (mínimo 8 caracteres)")
     .fill("test-password");
   await page.getByRole("button", { name: "Crear cuenta", exact: true }).click();
-  await expect(page.getByText(/Solicitud completada/)).toBeVisible();
+  await expect(page.getByText(/Revisa tu correo para confirmar/)).toBeVisible();
   expect(registered).toBe(true);
   await page
     .getByRole("button", { name: "Recuperar contraseña", exact: true })
@@ -173,7 +173,7 @@ test("registration and password recovery forms use Supabase Auth contracts", asy
   await page
     .getByRole("button", { name: "Recuperar contraseña", exact: true })
     .click();
-  await expect(page.getByText(/Solicitud completada/)).toBeVisible();
+  await expect(page.getByText(/Si existe una cuenta con ese correo/)).toBeVisible();
   expect(recoveryRequested).toBe(true);
   const token = [
     btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })),
@@ -193,6 +193,8 @@ test("registration and password recovery forms use Supabase Auth contracts", asy
   await page.goto(
     `/#access_token=${token}&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=recovery`,
   );
+  await expect(page.getByRole("button", { name: "Guardar nueva contraseña", exact: true })).toBeVisible();
+  await page.reload();
   await page
     .getByLabel("Contraseña (mínimo 8 caracteres)")
     .fill("new-test-password");
@@ -200,6 +202,37 @@ test("registration and password recovery forms use Supabase Auth contracts", asy
     .getByRole("button", { name: "Guardar nueva contraseña", exact: true })
     .click();
   await expect.poll(() => updated).toBe(true);
+  await expect(page.getByText(/Contraseña actualizada/)).toBeVisible();
+});
+
+test("Auth reports specific safe errors and expired email links", async ({ page }) => {
+  await mocks(page);
+  await page.goto("/");
+  await tab(page, "Perfil");
+  await page.getByLabel("Correo electrónico").fill("alice@example.com");
+  await page.getByLabel("Contraseña (mínimo 8 caracteres)").fill("password-test");
+  for (const [code, message] of [
+    ["user_already_exists", "Este correo ya está registrado"],
+    ["weak_password", "La contraseña no cumple"],
+    ["email_not_confirmed", "Confirma tu correo"],
+    ["over_email_send_rate_limit", "Se alcanzó el límite"],
+    ["email_address_not_authorized", "El servicio de correo"],
+    ["invalid_credentials", "El correo o la contraseña no coinciden"],
+    ["unexpected_failure", "No se pudo completar la operación"],
+  ]) {
+    await page.route("**/auth/v1/token**", (r) => r.fulfill({ status: 400, headers: { "x-supabase-api-version": "2024-01-01" }, json: { code, msg: "private-provider-detail" } }));
+    await page.getByRole("button", { name: "Iniciar sesión", exact: true }).click();
+    await expect(page.getByRole("status")).toContainText(message);
+    await expect(page.getByRole("status")).toContainText(code);
+    await expect(page.locator("body")).not.toContainText("private-provider-detail");
+  }
+  await page.route("**/auth/v1/token**", (r) => r.abort("internetdisconnected"));
+  await page.getByRole("button", { name: "Iniciar sesión", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("No pudimos conectar", { timeout: 20000 });
+  await page.goto("about:blank");
+  await page.goto("/#error=access_denied&error_code=otp_expired&error_description=private");
+  await expect(page.getByText(/El enlace venció/)).toBeVisible();
+  await expect(page).not.toHaveURL(/private/);
 });
 test("preserves demo, pause, summary, language and local history", async ({
   page,
@@ -320,7 +353,7 @@ test("destination uses the cycling profile and handles unavailable routing", asy
     accuracy: 5,
   });
   let profile = "";
-  await page.route("https://api.openrouteservice.org/v2/directions/**", (r) => {
+  await page.route("https://api.heigit.org/openrouteservice/v2/directions/**", (r) => {
     profile = r.request().url();
     return r.fulfill({
       json: {
@@ -348,7 +381,7 @@ test("destination uses the cycling profile and handles unavailable routing", asy
   expect(profile).toContain("cycling-regular");
   await page.getByRole("button", { name: "Caminar", exact: true }).click();
   await expect(page.getByText("Distancia de la ruta")).toHaveCount(0);
-  await page.route("https://api.openrouteservice.org/v2/directions/**", (r) =>
+  await page.route("https://api.heigit.org/openrouteservice/v2/directions/**", (r) =>
     r.fulfill({ status: 503 }),
   );
   await page.getByRole("button", { name: "Calcular ruta" }).click();
@@ -422,7 +455,7 @@ test("live GPS rejects noise and gaps, preserves destination and track through p
   page,
 }) => {
   await mocks(page);
-  await page.route("https://api.openrouteservice.org/v2/directions/**", (r) =>
+  await page.route("https://api.heigit.org/openrouteservice/v2/directions/**", (r) =>
     r.fulfill({
       json: {
         features: [
@@ -592,7 +625,7 @@ for (const [mode, label] of [
     page,
   }) => {
     await mocks(page);
-    await page.route("https://api.openrouteservice.org/v2/directions/**", (r) =>
+    await page.route("https://api.heigit.org/openrouteservice/v2/directions/**", (r) =>
       r.fulfill({
         json: {
           features: [

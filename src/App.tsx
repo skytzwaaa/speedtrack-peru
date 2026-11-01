@@ -61,7 +61,7 @@ function Workspace({ owner }: { owner: string }) {
     sync,
     importLocal,
   } = useActivityStore(owner);
-  const { recovery } = useAuth();
+  const { recovery, notice } = useAuth();
   const tracker = useSession(settings, save, owner);
   const t = (key: Parameters<typeof translate>[1]) =>
     translate(settings.language, key);
@@ -69,7 +69,7 @@ function Workspace({ owner }: { owner: string }) {
     document.documentElement.lang =
       settings.language === "qu" ? "qu-PE" : settings.language;
     setVoiceLanguage(settings.language);
-    setVoiceFallback(settings.voice_fallback ?? "off");
+    setVoiceFallback(settings.voice_fallback ?? "es");
     void refreshVoices();
     setVoiceVolume(settings.voice_volume);
     if (!settings.voice_enabled) stopSpeaking();
@@ -99,6 +99,11 @@ function Workspace({ owner }: { owner: string }) {
           <span className="top-bar-indicator" />
         </div>
         <main className="app-content" ref={scroll}>
+          {notice && (
+            <p className="notice" role="status">
+              {t(notice)}
+            </p>
+          )}
           {(storageError || historyError || tracker.draftError) && (
             <div className="error-message" role="alert">
               {t("storageError")}

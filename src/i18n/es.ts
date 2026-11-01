@@ -1,4 +1,34 @@
 export const es = {
+  authEmailExists:
+    "Este correo ya está registrado. Inicia sesión o recupera tu contraseña.",
+  authEmailInvalid: "Escribe un correo electrónico válido que puedas abrir.",
+  authPasswordInvalid:
+    "La contraseña no cumple los requisitos. Usa al menos 8 caracteres y combina letras, números y símbolos.",
+  authPasswordSame: "Elige una contraseña distinta de la anterior.",
+  authConfirmationPending:
+    "Confirma tu correo antes de iniciar sesión. Revisa también spam.",
+  authCredentialsInvalid:
+    "El correo o la contraseña no coinciden. Revisa tus datos o recupera tu contraseña.",
+  authRateLimit:
+    "Se alcanzó el límite de intentos o correos. Espera unos minutos antes de volver a intentar.",
+  authNetwork:
+    "No pudimos conectar. Comprueba Internet e inténtalo de nuevo. Tus recorridos locales siguen disponibles.",
+  authConfiguration:
+    "El acceso a cuentas no está configurado correctamente. Contacta al responsable de la app.",
+  authMailConfiguration:
+    "El servicio de correo aún no permite enviar este mensaje. El responsable debe revisar la configuración de correo de la app.",
+  authLinkExpired:
+    "El enlace venció, ya fue utilizado o pertenece a otro navegador. Solicita uno nuevo y ábrelo en el dispositivo donde lo pediste.",
+  authUnknown:
+    "No se pudo completar la operación. Inténtalo de nuevo; si continúa, comunica la referencia del error al responsable.",
+  authReference: "Referencia: {code} ({status})",
+  authSignupSent:
+    "Revisa tu correo para confirmar la cuenta. Si ya tenías una, inicia sesión o recupera la contraseña.",
+  authRecoverySent:
+    "Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña. Revisa también spam.",
+  authPasswordUpdated:
+    "Contraseña actualizada. Ya puedes iniciar sesión con la nueva contraseña.",
+  authConfirmed: "Correo confirmado. Tu sesión está lista.",
   routeOptions: "Opciones de ruta",
   zoomIn: "Acercar mapa",
   zoomOut: "Alejar mapa",

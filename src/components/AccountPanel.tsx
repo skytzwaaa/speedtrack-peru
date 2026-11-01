@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { authRedirect, supabase } from "../services/supabase";
 import { useI18n } from "../i18n";
+import { authError } from "../services/authErrors";
 export function AccountPanel({
   active,
   importLocal,
@@ -9,7 +10,7 @@ export function AccountPanel({
   active: boolean;
   importLocal: () => void;
 }) {
-  const { user, recovery, recovered } = useAuth();
+  const { user, recovery, recovered, setNotice } = useAuth();
   const { t } = useI18n();
   const [mode, setMode] = useState<"login" | "register" | "resetPassword">(
     "login",
@@ -19,6 +20,13 @@ export function AccountPanel({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  function showError(error: unknown) {
+    const detail = authError(error);
+    console.warn("SpeedTrack Auth", detail.code, detail.status ?? 0);
+    setMessage(
+      `${t(detail.key)} ${t("authReference", { code: detail.code, status: detail.status ?? "—" })}`,
+    );
+  }
   useEffect(() => {
     if (!user || !supabase) return;
     let live = true;
@@ -39,6 +47,7 @@ export function AccountPanel({
     if (!supabase) return;
     setBusy(true);
     setMessage("");
+    setNotice(null);
     try {
       let error;
       if (recovery) ({ error } = await supabase.auth.updateUser({ password }));
@@ -52,7 +61,7 @@ export function AccountPanel({
           }));
       } else if (mode === "register")
         ({ error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             data: { name: name.trim() },
@@ -60,20 +69,33 @@ export function AccountPanel({
           },
         }));
       else if (mode === "resetPassword")
-        ({ error } = await supabase.auth.resetPasswordForEmail(email, {
+        ({ error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: authRedirect,
         }));
       else
         ({ error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim(),
           password,
         }));
       if (error) throw error;
       setPassword("");
-      setMessage(t(user ? "saved" : "checkEmail"));
-      if (recovery) recovered();
-    } catch {
-      setMessage(t("accountError"));
+      setMessage(
+        t(
+          user
+            ? "saved"
+            : mode === "register"
+              ? "authSignupSent"
+              : "authRecoverySent",
+        ),
+      );
+      if (recovery) {
+        recovered();
+        const result = await supabase.auth.signOut({ scope: "local" });
+        if (result.error) throw result.error;
+        setNotice("authPasswordUpdated");
+      }
+    } catch (error) {
+      showError(error);
     } finally {
       setBusy(false);
     }
@@ -161,8 +183,8 @@ export function AccountPanel({
               setBusy(true);
               try {
                 await importLocal();
-              } catch {
-                setMessage(t("accountError"));
+              } catch (error) {
+                showError(error);
               } finally {
                 setBusy(false);
               }
@@ -177,10 +199,12 @@ export function AccountPanel({
             onClick={async () => {
               setBusy(true);
               try {
-                const { error } = await supabase!.auth.signOut({ scope: "local" });
+                const { error } = await supabase!.auth.signOut({
+                  scope: "local",
+                });
                 if (error) throw error;
-              } catch {
-                setMessage(t("accountError"));
+              } catch (error) {
+                showError(error);
               } finally {
                 setBusy(false);
               }

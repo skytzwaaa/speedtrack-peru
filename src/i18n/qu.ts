@@ -1,6 +1,36 @@
 import type { TranslationKey } from "./es";
 // Cusco-Collao draft. Requires native-speaker linguistic review.
 export const qu: Record<TranslationKey, string> = {
+  authEmailExists:
+    "Kay correoqa qillqasqañam. Yaykuy utaq pakasqa rimayniykita musuqyachiy.",
+  authEmailInvalid: "Kichay atisqayki allin correota qillqay.",
+  authPasswordInvalid:
+    "Pakasqa rimayqa mañakusqakunata manam hunt'anchu. Pusaq utaq aswan sanampakunawan, yupaykunawan, unanchañkunawan qillqay.",
+  authPasswordSame: "Ñawpaq pakasqa rimayniykimanta hukta akllay.",
+  authConfirmationPending:
+    "Manaraq yaykuchkaspa correoykita takyachiy. Spam nisqatapas qhaway.",
+  authCredentialsInvalid:
+    "Correo utaq pakasqa rimay manam tupanchu. Qillqasqaykita qhaway utaq pakasqa rimayta musuqyachiy.",
+  authRateLimit:
+    "Ancha kutitam mañakurqanki. Huk ratuta suyay, chaymanta yapamanta ruray.",
+  authNetwork:
+    "Manam t'inkiy atikunchu. Internetta qhaway, yapamanta ruray. Kay dispositivopi purisqaykikuna kachkanmi.",
+  authConfiguration:
+    "Cuentaman yaykuna manam allin wakichisqachu. App kamachiqwan rimay.",
+  authMailConfiguration:
+    "Correo apachiq manaraq kay willayta apachiyta atinchu. App kamachiq correo wakichiyta qhawanman.",
+  authLinkExpired:
+    "Kay t'inkiqa mawk'añam, llamk'achisqañam utaq huk navegadorpaqmi. Musuqta mañakuy, mañakusqayki dispositivopi kichay.",
+  authUnknown:
+    "Manam rurayta tukuyta atikunchu. Yapamanta ruray; hinallapuni kaptin pantaypa yupayninta kamachiqman willay.",
+  authReference: "Pantaypa yupaynin: {code} ({status})",
+  authSignupSent:
+    "Cuentaykita takyachinaykipaq correoykita qhaway. Cuenta kachkasqa kaptinqa yaykuy utaq pakasqa rimayta musuqyachiy.",
+  authRecoverySent:
+    "Kay correowan cuenta kaptinqa pakasqa rimay musuqyachina t'inkita chaskinki. Spam nisqatapas qhaway.",
+  authPasswordUpdated:
+    "Pakasqa rimay musuqyachisqañam. Musuq pakasqa rimaywan yaykuy.",
+  authConfirmed: "Correo takyachisqañam. Yaykuyniyki wakichisqañam.",
   routeOptions: "Purina ñan akllanakuna",
   zoomIn: "Mapata qayllachiy",
   zoomOut: "Mapata karunchay",

@@ -7,6 +7,7 @@ import { parseEnv } from "node:util";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { chromium, expect } from "@playwright/test";
+import { acceptAuthCallback, nativeAuthRedirect } from "../src/services/authCallback.ts";
 
 assert(
   process.argv.includes("--linked"),
@@ -419,6 +420,9 @@ try {
             .length,
       )
       .toBe(2);
+    await page.reload();
+    await tab("Historial");
+    await expect(page.locator(".session-card")).toHaveCount(2);
     await tab("Perfil");
     await page
       .getByRole("button", { name: "Cerrar sesión", exact: true })
@@ -449,6 +453,43 @@ try {
     console.log(
       "PASS: real Chromium login -> save -> logout -> clear cache -> login -> cloud recovery -> account B isolation",
     );
+    // Exercise real email verification redirects without claiming SMTP delivery.
+    const account = users[0];
+    const recoveryLink = checked(await admin.auth.admin.generateLink({
+      type: "recovery", email: account.email,
+      options: { redirectTo: process.env.SPEEDTRACK_TEST_URL },
+    }), "Generate real recovery link");
+    await page.evaluate(() => globalThis.localStorage.clear());
+    await page.goto(recoveryLink.properties.action_link);
+    await expect(page.getByRole("button", { name: "Guardar nueva contraseña", exact: true })).toBeVisible();
+    await page.reload();
+    const newPassword = `${randomUUID()}Bb8!`;
+    await page.getByLabel("Contraseña (mínimo 8 caracteres)").fill(newPassword);
+    await page.getByRole("button", { name: "Guardar nueva contraseña", exact: true }).click();
+    await expect(page.getByText(/Contraseña actualizada/)).toBeVisible();
+    assert((await client().auth.signInWithPassword({ email: account.email, password: account.password })).error, "Previous password must fail after recovery");
+    account.password = newPassword;
+    await login(account);
+    console.log("PASS: real recovery verification link -> browser reload -> new password -> old password rejected -> login; email transport not tested");
+
+    const nativeLink = checked(await admin.auth.admin.generateLink({
+      type: "recovery", email: account.email,
+      options: { redirectTo: nativeAuthRedirect },
+    }), "Generate native recovery link");
+    const verification = await fetch(nativeLink.properties.action_link, { redirect: "manual" });
+    assert.equal(verification.status, 303);
+    const callback = verification.headers.get("location");
+    assert(callback?.startsWith(nativeAuthRedirect), "Supabase must allow the exact native callback");
+    const nativeClient = client();
+    clients.push(nativeClient);
+    const accepted = await acceptAuthCallback(callback, nativeClient);
+    assert.equal(accepted?.recovery, true);
+    assert.equal(accepted?.userId, account.id);
+    const nativePassword = `${randomUUID()}Cc7!`;
+    checked(await nativeClient.auth.updateUser({ password: nativePassword }), "Native callback password update");
+    checked(await nativeClient.auth.signOut({ scope: "local" }), "Native logout");
+    checked(await nativeClient.auth.signInWithPassword({ email: account.email, password: nativePassword }), "Native new password login");
+    console.log("PASS: real native redirect and callback adapter -> password update -> login (adapter test, not a physical Android device)");
   }
 } finally {
   if (browser) await browser.close();

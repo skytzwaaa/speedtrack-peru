@@ -15,6 +15,7 @@ public class SpeedTrackVoicePlugin extends Plugin {
     private boolean ready = false;
     private final List<Runnable> waiting = new ArrayList<>();
     private PluginCall speaking;
+    private int generation = 0;
     private void withEngine(Runnable action) {
         getActivity().runOnUiThread(() -> {
             if (ready) { action.run(); return; }
@@ -47,7 +48,9 @@ public class SpeedTrackVoicePlugin extends Plugin {
         });
     }
     @PluginMethod public void speak(PluginCall call) {
+        final int requestedGeneration = generation;
         withEngine(() -> {
+            if (requestedGeneration != generation) { call.resolve(); return; }
             Locale locale = Locale.forLanguageTag(call.getString("language", "es-PE"));
             if (engine == null || engine.isLanguageAvailable(locale) < TextToSpeech.LANG_AVAILABLE) { call.reject("voiceUnavailable"); return; }
             if (speaking != null) speaking.resolve();
@@ -62,6 +65,7 @@ public class SpeedTrackVoicePlugin extends Plugin {
     }
     @PluginMethod public void stop(PluginCall call) {
         getActivity().runOnUiThread(() -> {
+            generation++;
             if (engine != null) engine.stop();
             if (speaking != null) { speaking.resolve(); speaking = null; }
             call.resolve();
