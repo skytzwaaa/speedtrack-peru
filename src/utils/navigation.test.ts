@@ -89,4 +89,17 @@ describe("routing and dynamic ETA", () => {
     expect(recentSpeed(m, 9)).toBeGreaterThan(0);
     expect(recentSpeed(m, 30)).toBe(0);
   });
+  it("requires fresh samples after a pause or GPS break", () => {
+    const samples = generateDemo("vehicle")
+      .measurements.slice(0, 6)
+      .map((m, i) => ({
+        ...m,
+        elapsed: i,
+        speed: i < 3 ? 100 : 5,
+        break_before: i === 3,
+      }));
+    expect(recentSpeed(samples.slice(0, 4), 3)).toBe(0);
+    expect(recentSpeed(samples.slice(0, 5), 4)).toBe(0);
+    expect(recentSpeed(samples, 5)).toBe(5);
+  });
 });

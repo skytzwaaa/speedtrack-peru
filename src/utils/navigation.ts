@@ -15,9 +15,14 @@ export function userEta(distanceKm: number, speedKmh: number): number | null {
 export function recentSpeed(measurements: Measurement[], elapsed: number) {
   const last = measurements.at(-1);
   if (!last || elapsed - last.elapsed > 10 || last.speed < 0.7) return 0;
-  const samples = measurements.filter(
-    (m) => elapsed - m.elapsed <= 20 && m.elapsed <= elapsed,
-  );
+  const samples: Measurement[] = [];
+  for (let i = measurements.length - 1; i >= 0; i--) {
+    const m = measurements[i];
+    if (elapsed - m.elapsed > 20) break;
+    if (m.elapsed <= elapsed) samples.push(m);
+    // A pause or GPS reacquisition starts a new velocity window.
+    if (m.break_before) break;
+  }
   return samples.length >= 3
     ? samples.reduce((a, m) => a + m.speed, 0) / samples.length
     : 0;
