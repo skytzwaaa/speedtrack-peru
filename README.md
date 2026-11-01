@@ -4,6 +4,8 @@ Evolución del proyecto original de Física I: React + Vite + TypeScript, estilo
 
 ## Ejecutar
 
+Estado revisado, correcciones desde `77c03d1` y acciones externas pendientes: [docs/estado-v2.md](docs/estado-v2.md).
+
 Requisitos: Node **22.12+** (probado con Node 24), npm y Git.
 
 ```sh
@@ -67,6 +69,7 @@ La recuperación envía un enlace; al abrirlo en la web, la aplicación permite 
 - Autenticado: caché, borrador, preferencias y cola de subida usan claves con el ID del propietario. Un cambio de cuenta desmonta el espacio de trabajo anterior.
 - Primero se muestra la caché; después se sincroniza con Supabase. Hay reintentos al recuperar conexión, cada minuto y con el indicador de sincronización.
 - El botón de Perfil **Importar mis recorridos locales** importa solo actividades reales y completas. Es explícito para evitar atribuir a una cuenta datos de otra persona que haya usado el dispositivo. Se conservan los originales y no se importan demos.
+- Las nuevas importaciones tienen identificadores estables por cuenta para evitar colisiones entre usuarios. Si falla la escritura de la cola al finalizar, se conserva el borrador para recuperarlo antes de iniciar otra actividad.
 - Una actividad en curso se guarda aproximadamente cada cinco segundos y al pausar. Tras cerrar o recargar, **Recuperar actividad interrumpida** la guarda en el historial; no inventa el tramo sin muestras. Es necesario recuperarla antes de iniciar otra.
 - Las preferencias modificadas sin conexión se conservan y se sincronizan posteriormente.
 - Supabase almacena el historial de la cuenta; localStorage es caché y cola. No borrar datos del navegador antes de sincronizar. El almacenamiento local no está cifrado y tiene cuota limitada: si se agota, se muestra el error y se conserva la sesión en memoria. Para uso compartido, utilizar perfiles separados del navegador/dispositivo.
