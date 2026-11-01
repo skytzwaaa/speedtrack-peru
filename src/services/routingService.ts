@@ -37,7 +37,7 @@ export const routingService: RoutingProvider = {
     if (!routingAvailable) throw new Error("routingUnavailable");
     const profile = routingProfile(mode);
     const base =
-      import.meta.env.VITE_ROUTING_URL || "https://api.openrouteservice.org";
+      import.meta.env.VITE_ROUTING_URL || "https://api.heigit.org/openrouteservice";
     const response = await providerFetch(
       `${base}/v2/directions/${profile}/geojson`,
       {
@@ -89,7 +89,7 @@ export async function searchDestinations(
 ): Promise<{ name: string; coordinate: Coordinate }[]> {
   if (!routingAvailable || query.trim().length < 3) return [];
   const base =
-    import.meta.env.VITE_ROUTING_URL || "https://api.openrouteservice.org";
+    import.meta.env.VITE_ROUTING_URL || "https://api.heigit.org/openrouteservice";
   const response = await providerFetch(
     `${base}/geocode/search?text=${encodeURIComponent(query)}&size=5`,
     {
