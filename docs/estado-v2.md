@@ -1,5 +1,7 @@
 # Estado de SpeedTrack V2 — 2026-11-01
 
+**Actualización posterior:** la ronda de mapa, precisión, voz e idiomas está descrita en [precision-v2.md](precision-v2.md); reemplaza las limitaciones de voz y cobertura Quechua de este estado histórico.
+
 Revisión desde `77c03d1`, exclusivamente en `feature/speedtrack-v2`. El repositorio ya contenía la implementación principal: esta continuación corrige defectos de persistencia y ETA sin sustituir las pantallas existentes.
 
 | Requisito | Estado comprobado | Pendiente |

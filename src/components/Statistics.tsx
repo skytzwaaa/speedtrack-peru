@@ -23,9 +23,19 @@ export function Statistics({ sessions }: { sessions: Session[] }) {
     const end = new Date(date);
     end.setDate(end.getDate() + 1);
     return {
-      label: date.toLocaleDateString(language === "en" ? "en-US" : "es-PE", {
-        weekday: "short",
-      }),
+      label: t(
+        (
+          [
+            "weekday0",
+            "weekday1",
+            "weekday2",
+            "weekday3",
+            "weekday4",
+            "weekday5",
+            "weekday6",
+          ] as const
+        )[date.getDay()],
+      ),
       km: real
         .filter(
           (s) => new Date(s.start_time) >= date && new Date(s.start_time) < end,
@@ -41,19 +51,19 @@ export function Statistics({ sessions }: { sessions: Session[] }) {
         <Metric
           label={t("distance")}
           value={number(distance, language, 2)}
-          unit="km"
+          unit={t("distanceUnit")}
         />
         <Metric label={t("time")} value={duration(time)} />
         <Metric label={t("sessions")} value={real.length} />
         <Metric
           label={t("avgSpeed")}
           value={number(calculateAverageSpeed(distance, time), language)}
-          unit="km/h"
+          unit={t("speedUnit")}
         />
         <Metric
           label={t("maxSpeed")}
           value={number(Math.max(0, ...real.map((s) => s.max_speed)), language)}
-          unit="km/h"
+          unit={t("speedUnit")}
         />
         <Metric
           label={t("avgPace")}
@@ -63,7 +73,7 @@ export function Statistics({ sessions }: { sessions: Session[] }) {
               foot.reduce((a, s) => a + s.duration, 0),
             ),
           )}
-          unit="min/km"
+          unit={t("paceUnit")}
         />
         <Metric
           label={t("monthly")}
@@ -72,7 +82,7 @@ export function Statistics({ sessions }: { sessions: Session[] }) {
             language,
             2,
           )}
-          unit="km"
+          unit={t("distanceUnit")}
         />
       </div>
       <div className="weekly-bars card" aria-label={t("weekly")}>

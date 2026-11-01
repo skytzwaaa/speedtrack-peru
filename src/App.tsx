@@ -12,6 +12,8 @@ import { I18nContext, translate } from "./i18n";
 
 import {
   setVoiceLanguage,
+  setVoiceFallback,
+  refreshVoices,
   setVoiceVolume,
   stopSpeaking,
 } from "./services/voiceService";
@@ -66,7 +68,9 @@ function Workspace({ owner }: { owner: string }) {
   useEffect(() => {
     document.documentElement.lang =
       settings.language === "qu" ? "qu-PE" : settings.language;
-    setVoiceLanguage(settings.voice_language);
+    setVoiceLanguage(settings.language);
+    setVoiceFallback(settings.voice_fallback ?? "off");
+    void refreshVoices();
     setVoiceVolume(settings.voice_volume);
     if (!settings.voice_enabled) stopSpeaking();
   }, [settings]);
@@ -134,6 +138,8 @@ function Workspace({ owner }: { owner: string }) {
               session={tracker.session}
               paused={tracker.paused}
               gpsError={tracker.gpsError}
+              gpsAccuracy={tracker.gpsAccuracy}
+              waitingFix={tracker.waitingFix}
               settings={settings}
               setLimit={(v) => updateSettings({ ...settings, speed_limit: v })}
               updateNavigation={tracker.updateNavigation}

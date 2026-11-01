@@ -13,8 +13,11 @@ export const number = (n: number, language: Language, digits = 1) =>
     maximumFractionDigits: digits,
   }).format(n);
 export const date = (value: string, language: Language) =>
-  new Intl.DateTimeFormat(language === "en" ? "en-US" : "es-PE", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(value));
+  new Intl.DateTimeFormat(
+    language === "qu" ? "qu-PE" : language === "en" ? "en-US" : "es-PE",
+    {
+      day: "2-digit",
+      month: language === "qu" ? "2-digit" : "long",
+      year: "numeric",
+    },
+  ).format(new Date(value));

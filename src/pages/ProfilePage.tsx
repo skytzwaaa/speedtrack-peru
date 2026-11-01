@@ -9,11 +9,12 @@ import {
   UserRound,
 } from "lucide-react";
 import type { Language, Settings } from "../types";
-import { useI18n, translate } from "../i18n";
+import { useI18n } from "../i18n";
 import {
   hasCompatibleVoice,
   isSpeechSupported,
-  speak,
+  announceVoice,
+  subscribeVoices,
 } from "../services/voiceService";
 import { PageHeading, Section, Toggle } from "../components/ui";
 export function ProfilePage({
@@ -26,10 +27,7 @@ export function ProfilePage({
   const { t } = useI18n();
   const [, setVoiceVersion] = useState(0);
   useEffect(() => {
-    if (!isSpeechSupported()) return;
-    const change = () => setVoiceVersion((v) => v + 1);
-    speechSynthesis.addEventListener("voiceschanged", change);
-    return () => speechSynthesis.removeEventListener("voiceschanged", change);
+    return subscribeVoices(() => setVoiceVersion((v) => v + 1));
   }, []);
   const patch = (changes: Partial<Settings>) => update({ ...s, ...changes });
   const languages = (
@@ -88,16 +86,29 @@ export function ProfilePage({
             onChange={(v) => patch({ voice_enabled: v })}
             disabled={!isSpeechSupported()}
           />
-          <label className="setting-row" htmlFor="voice-language">
-            <span>{t("voiceLanguage")}</span>
-            {languages("voice-language", s.voice_language, (v) =>
-              patch({ voice_language: v }),
-            )}
+          <label className="setting-row" htmlFor="voice-fallback">
+            <span>{t("voiceFallback")}</span>
+            <select
+              id="voice-fallback"
+              value={s.voice_fallback ?? "off"}
+              onChange={(e) =>
+                patch({ voice_fallback: e.target.value as "off" | "es" | "en" })
+              }
+            >
+              <option value="off">{t("disabled")}</option>
+              <option value="es">{t("spanish")}</option>
+              <option value="en">{t("english")}</option>
+            </select>
           </label>
+          <Toggle
+            label={t("progressAlerts")}
+            checked={s.progress_alerts ?? false}
+            onChange={(v) => patch({ progress_alerts: v })}
+          />
           {!isSpeechSupported() ? (
             <p className="notice">{t("voiceUnavailable")}</p>
           ) : (
-            !hasCompatibleVoice(s.voice_language) && (
+            !hasCompatibleVoice(s.language) && (
               <p className="notice">{t("languageVoiceUnavailable")}</p>
             )
           )}
@@ -132,8 +143,8 @@ export function ProfilePage({
           </label>
           <button
             className="secondary-button full"
-            disabled={!hasCompatibleVoice(s.voice_language)}
-            onClick={() => speak(translate(s.voice_language, "voiceTest"))}
+            disabled={!isSpeechSupported()}
+            onClick={() => announceVoice("voiceTest")}
           >
             <AudioLines size={16} />
             {t("testVoice")}

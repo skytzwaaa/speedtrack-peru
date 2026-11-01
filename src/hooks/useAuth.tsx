@@ -6,6 +6,8 @@ import {
   type ReactNode,
 } from "react";
 import type { User } from "@supabase/supabase-js";
+import { translate } from "../i18n";
+import { storageService } from "../services/storageService";
 import { supabase } from "../services/supabase";
 const AuthContext = createContext<{
   user: User | null;
@@ -32,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (!ready)
     return (
       <div className="notice" role="status">
-        SpeedTrack Perú…
+        {translate(storageService.loadSettings().language, "loading")}
       </div>
     );
   return (

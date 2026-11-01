@@ -417,3 +417,166 @@ test("an authenticated activity survives failed upload and retries without dupli
   ).toBeVisible();
   expect(saved).toHaveLength(1);
 });
+
+test("live GPS rejects noise and gaps, preserves destination and track through pause and map gestures", async ({
+  page,
+}) => {
+  await mocks(page);
+  await page.route("https://api.openrouteservice.org/v2/directions/**", (r) =>
+    r.fulfill({
+      json: {
+        features: [
+          {
+            geometry: { coordinates: r.request().postDataJSON().coordinates },
+            properties: { summary: { distance: 500, duration: 300 } },
+          },
+        ],
+      },
+    }),
+  );
+  await page.addInitScript(() => {
+    let callback: PositionCallback;
+    Object.defineProperty(navigator, "geolocation", {
+      value: {
+        watchPosition: (cb: PositionCallback) => {
+          callback = cb;
+          return 1;
+        },
+        clearWatch: () => {},
+      },
+    });
+    Object.assign(window, {
+      emitGps: (longitude: number, accuracy = 5) =>
+        callback({
+          timestamp: Date.now(),
+          coords: {
+            latitude: -12.12,
+            longitude,
+            accuracy,
+            speed: null,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+          },
+        } as GeolocationPosition),
+    });
+  });
+  await page.clock.install();
+  await page.goto("/");
+  await tab(page, "Actividad");
+  await page
+    .getByRole("button", { name: "Iniciar actividad", exact: true })
+    .click();
+  const emit = async (longitude: number, accuracy = 5) => {
+    await page.clock.runFor(2000);
+    await page.evaluate(
+      ({ longitude, accuracy }) =>
+        (
+          window as unknown as {
+            emitGps: (lon: number, accuracy: number) => void;
+          }
+        ).emitGps(longitude, accuracy),
+      { longitude, accuracy },
+    );
+  };
+  await emit(-77.03);
+  await emit(-77.02994);
+  await emit(-77.02988);
+  await expect(page.locator(".live-summary")).toContainText(/0[.,]01/);
+  await page.getByRole("button", { name: "Pausar", exact: true }).click();
+  const before = (await page.locator(".live-summary").textContent())!;
+  await emit(-76.5);
+  await page.clock.runFor(10000);
+  await expect(page.locator(".live-summary")).toHaveText(before);
+  await page.getByRole("button", { name: "Reanudar", exact: true }).click();
+  await emit(-77.029, 100);
+  await expect(page.getByText(/Precisión GPS baja/)).toBeVisible();
+  await emit(-77.029); // new baseline, never adds the unobserved journey
+  await expect(page.locator(".live-summary")).toContainText(/0[.,]01/);
+  await expect(
+    page.getByRole("button", { name: "Acercar mapa" }),
+  ).toBeVisible();
+  await page.locator(".map-canvas").click({ position: { x: 180, y: 150 } });
+  await expect(
+    page.getByRole("button", { name: "Quitar destino" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Calcular ruta" }).click();
+  await expect(
+    page.getByText("Distancia de la ruta", { exact: true }),
+  ).toBeVisible();
+  const canvas = page.locator(".map-canvas");
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  await page.mouse.move(box!.x + 120, box!.y + 120);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + 210, box!.y + 180, { steps: 8 });
+  await page.mouse.up();
+  await expect(
+    page.getByRole("checkbox", { name: "Seguir ubicación" }),
+  ).not.toBeChecked();
+  await page.getByRole("button", { name: "Centrar en mi ubicación" }).click();
+  await expect(
+    page.getByRole("checkbox", { name: "Seguir ubicación" }),
+  ).toBeChecked();
+  await expect(
+    page.getByText("Distancia de la ruta", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Quitar destino" }).click();
+  await expect(
+    page.getByRole("button", { name: "Quitar destino" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Finalizar", exact: true }).click();
+  const saved = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("speedtrack.sessions.v1")!)[0],
+  );
+  expect(saved.distance).toBeGreaterThan(0.01);
+  expect(saved.distance).toBeLessThan(0.02);
+  expect(
+    saved.measurements.filter(
+      (m: { break_before?: boolean }) => m.break_before,
+    ),
+  ).toHaveLength(2);
+});
+
+test("Quechua covers account, navigation, activity and history without Spanish inheritance", async ({
+  page,
+}) => {
+  await mocks(page);
+  await page.goto("/");
+  await tab(page, "Perfil");
+  await page.locator("#language").selectOption("qu");
+  await expect(
+    page.getByRole("button", { name: "Yupayniykiman yaykuy", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("checkbox", { name: /Rimay yanapaq/ }),
+  ).toBeVisible();
+  await tab(page, "Kuyuy");
+  await expect(
+    page.getByRole("heading", { name: "Purinaykita wakichiy" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Chayanata maskay", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("checkbox", { name: "Qhawarichiy purisqata llamk’achiy" })
+    .check();
+  await page
+    .getByRole("button", { name: "Kuyuyta qallariy", exact: true })
+    .click();
+  await expect(page.locator(".live-summary")).toContainText(
+    "Kunan puriy pacha",
+  );
+  await page.screenshot({
+    path: "test-results/quechua-live-map.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Tukuy", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Kuyuy pisiyachisqa" }),
+  ).toBeVisible();
+  await tab(page, "Purisqakuna");
+  await expect(page.locator(".session-card")).toHaveCount(4);
+  await page.reload();
+  await expect(page.locator(".bottom-nav")).toContainText("Purisqakuna");
+});

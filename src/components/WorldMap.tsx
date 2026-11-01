@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Map,
   NavigationControl,
@@ -27,6 +27,7 @@ import { Metric, Toggle } from "./ui";
 import { watchGps } from "../services/gpsService";
 setWorkerUrl(workerUrl);
 export interface MapProps {
+  children?: ReactNode;
   measurements: Measurement[];
   mode?: ActivityType;
   elapsed?: number;
@@ -40,6 +41,7 @@ const empty = (): GeoJSON.FeatureCollection => ({
 });
 export default function WorldMap({
   measurements,
+  children,
   mode = "run",
   elapsed = 0,
   paused = false,
@@ -50,6 +52,13 @@ export default function WorldMap({
   const host = useRef<HTMLDivElement>(null),
     map = useRef<Map | null>(null);
   const change = useRef(onNavigation);
+  const mapLocale = useRef({
+    "Map.Title": t("route"),
+    "NavigationControl.ZoomIn": t("zoomIn"),
+    "NavigationControl.ZoomOut": t("zoomOut"),
+    "AttributionControl.ToggleAttribution": t("mapAttribution"),
+    "AttributionControl.MapFeedback": t("mapFeedback"),
+  });
   const [ready, setReady] = useState(false),
     [mapError, setMapError] = useState(false);
   const [follow, setFollow] = useState(!!onNavigation);
@@ -61,6 +70,7 @@ export default function WorldMap({
       { name: string; coordinate: Coordinate }[]
     >([]);
   const [searchError, setSearchError] = useState(false);
+  const [locationError, setLocationError] = useState(false);
   const [traffic, setTraffic] = useState<TrafficReport | null>(null);
   const stopLocation = useRef<() => void>(() => {});
   const request = useRef<AbortController | null>(null);
@@ -74,6 +84,7 @@ export default function WorldMap({
     try {
       instance = new Map({
         container: host.current,
+        locale: mapLocale.current,
         style: "https://tiles.openfreemap.org/styles/liberty",
         center: [-77.0428, -12.0464],
         zoom: 11,
@@ -82,7 +93,7 @@ export default function WorldMap({
       instance.addControl(new NavigationControl({ showCompass: false }));
       instance.on("error", () => setMapError(true));
       instance.on("load", () => {
-        for (const id of ["track", "planned", "markers"])
+        for (const id of ["track", "planned", "remaining", "markers"])
           instance.addSource(id, { type: "geojson", data: empty() });
         instance.addLayer({
           id: "planned",
@@ -92,6 +103,16 @@ export default function WorldMap({
             "line-color": "#8ac8fa",
             "line-width": 5,
             "line-opacity": 0.75,
+          },
+        });
+        instance.addLayer({
+          id: "remaining",
+          type: "line",
+          source: "remaining",
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 3,
+            "line-dasharray": [2, 2],
           },
         });
         instance.addLayer({
@@ -170,9 +191,13 @@ export default function WorldMap({
             ],
     });
     const segments: Coordinate[][] = [[]];
+    let previousDistance: number | undefined;
     for (const sample of measurements) {
       if (sample.latitude === null || sample.longitude === null) continue;
       if (sample.break_before && segments.at(-1)!.length) segments.push([]);
+      if (!sample.break_before && sample.distance === previousDistance)
+        continue;
+      previousDistance = sample.distance;
       segments.at(-1)!.push([sample.longitude, sample.latitude]);
     }
     (m.getSource("track") as GeoJSONSource).setData({
@@ -182,7 +207,21 @@ export default function WorldMap({
     (m.getSource("planned") as GeoJSONSource).setData(
       line(route?.coordinates ?? []),
     );
+    (m.getSource("remaining") as GeoJSONSource).setData(
+      line(
+        route && position
+          ? routeProgress(position, route.coordinates).remainingCoordinates
+          : [],
+      ),
+    );
     const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+    const origin = route?.coordinates[0] ?? points[0];
+    if (origin)
+      features.push({
+        type: "Feature",
+        properties: { label: "O" },
+        geometry: { type: "Point", coordinates: origin },
+      });
     if (position)
       features.push({
         type: "Feature",
@@ -205,7 +244,7 @@ export default function WorldMap({
         zoom: Math.max(14, m.getZoom()),
         duration: 400,
       });
-    else if (points.length && !fitted.current) {
+    else if (!onNavigation && points.length && !fitted.current) {
       fitted.current = true;
       const xs = points.map((p) => p[0]),
         ys = points.map((p) => p[1]);
@@ -260,6 +299,7 @@ export default function WorldMap({
       setFollow(true);
       return;
     }
+    setLocationError(false);
     stopLocation.current();
     stopLocation.current = watchGps(
       (p) => {
@@ -268,7 +308,7 @@ export default function WorldMap({
         map.current?.easeTo({ center: c, zoom: 16 });
         stopLocation.current();
       },
-      () => setError(true),
+      () => setLocationError(true),
     );
   };
   const calculate = async () => {
@@ -301,6 +341,14 @@ export default function WorldMap({
         role="region"
         aria-label={t("route")}
       />
+      {children}
+      {locationError && (
+        <p role="alert" className="notice">
+          {t("locationUnavailable")}
+        </p>
+      )}
+      {busy && <p role="status">{t("loading")}</p>}
+      <p className="map-legend">{t("mapLegend")}</p>
       {mapError && (
         <p className="notice" role="status">
           {t("mapError")}
@@ -400,7 +448,7 @@ export default function WorldMap({
               <Metric
                 label={t("routeDistance")}
                 value={number(route.distance, language, 2)}
-                unit="km"
+                unit={t("distanceUnit")}
               />
               <Metric
                 label={t("providerEta")}
@@ -415,12 +463,12 @@ export default function WorldMap({
                         ? number(progress.remaining, language, 2)
                         : "—"
                     }
-                    unit="km"
+                    unit={t("distanceUnit")}
                   />
                   <Metric
                     label={t("filteredSpeed")}
                     value={number(speed, language)}
-                    unit="km/h"
+                    unit={t("speedUnit")}
                   />
                   <Metric
                     label={t("personalEta")}

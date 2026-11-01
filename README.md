@@ -4,7 +4,7 @@ Evolución del proyecto original de Física I: React + Vite + TypeScript, estilo
 
 ## Ejecutar
 
-Estado revisado, correcciones desde `77c03d1` y acciones externas pendientes: [docs/estado-v2.md](docs/estado-v2.md).
+Ronda de precisión/mapa/voz/idiomas: [docs/precision-v2.md](docs/precision-v2.md). Estado anterior y acciones externas pendientes: [docs/estado-v2.md](docs/estado-v2.md).
 
 Requisitos: Node **22.12+** (probado con Node 24), npm y Git.
 
@@ -37,8 +37,8 @@ En Windows, si PowerShell bloquea `npm.ps1`, usar `npm.cmd` y `npx.cmd`. No es n
 - Registro, login, logout, recuperación de contraseña, sesión persistente, nombre de perfil y preferencias mediante Supabase.
 - Historial separado por usuario, estadísticas totales, últimos siete días y mes actual, con actividades por tipo.
 - Física: distancia frente a desplazamiento, rapidez frente a velocidad vectorial, MRU/MRUV, aceleración, conversiones e incertidumbre.
-- Voz con SpeechSynthesis: kilómetros, pausa, reanudación, eventos y proximidad de llegada. Depende de las voces disponibles en el dispositivo.
-- Español e inglés; quechua Cusco-Collao parcial, con fallback explícito al español en términos pendientes de revisión lingüística.
+- Voz centralizada con SpeechSynthesis en web y TextToSpeech nativo en Android: inicio, pausa/reanudación, finalización, kilómetros, progreso/ETA, precisión GPS y alertas. Cola con prioridades y alternativa de idioma configurable.
+- Español, inglés y diccionario completo Quechua Cusco-Collao (borrador pendiente de revisión lingüística). Claves/interpolaciones comprobadas; fallback seguro de emergencia.
 - Web y Android Capacitor, sin reescribir la aplicación en otro framework.
 
 ## Supabase
@@ -90,7 +90,7 @@ ritmo = 3600 / velocidad_kmh  (segundos por km)
 ETA_usuario = distancia_restante_km / velocidad_filtrada_kmh × 3600
 ```
 
-El filtro rechaza coordenadas inválidas, precisión peor de 50 m, muestras fuera de orden y saltos incompatibles con el modo. Usa la velocidad del dispositivo cuando es válida, distancia geográfica en otro caso y suavizado exponencial de unos tres segundos. La estimación de aceleración también tiene límites de plausibilidad. Los saltos rechazados no se convierten en la siguiente referencia.
+El filtro rechaza coordenadas inválidas, precisión peor de 35 m, muestras fuera de orden, saltos y aceleraciones incompatibles con el modo. Calcula velocidad instantánea con desplazamiento/tiempo válido y la distingue de velocidad filtrada, promedio y precisión GPS. La velocidad del dispositivo solo confirma parada o descarta valores imposibles. El ancla acumula pasos pequeños sin sumar ruido; parámetros configurables y sus compromisos están documentados en [precisión V2](docs/precision-v2.md).
 
 Después de una pausa o un corte GPS mayor de 15 segundos se establece una nueva referencia sin sumar una línea entre posiciones no observadas. Una señal de más de diez segundos no alimenta el ETA. La velocidad reciente usa hasta veinte segundos y al menos tres muestras; detenido se muestra “Esperando movimiento”.
 
@@ -169,7 +169,7 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 El APK debug se pudo compilar en este entorno con Java 21 y SDK instalado. No se sube a Git. Para distribución pública se requiere firma release propia y las validaciones del canal de distribución; no hay claves de firma en el repositorio. La prueba con GPS físico debe realizarse en un teléfono: no había dispositivo ni AVD conectado durante el desarrollo.
 
-Geolocalización tiene adaptador nativo `@capacitor/geolocation` y fallback web. La voz web puede no estar disponible en algunos WebViews Android; la UI lo indica. No hay servicio de tracking permanente.
+Geolocalización tiene adaptador nativo `@capacitor/geolocation` y fallback web. Android usa un plugin TTS nativo que consulta disponibilidad de idioma, sin depender del SpeechSynthesis del WebView. No hay servicio de tracking permanente.
 
 ## Vercel
 

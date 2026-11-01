@@ -1386,3 +1386,34 @@ input[type="range"] {
     font-size: 19px;
   }
 }
+
+/* The live map and primary controls stay above optional analysis. */
+.activity-map .map-canvas {
+  height: clamp(250px, 38dvh, 430px);
+}
+.live-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 8px;
+}
+.live-summary .metric {
+  padding: 12px 8px;
+}
+.activity-details > summary {
+  cursor: pointer;
+  padding: 18px 0;
+  color: var(--muted);
+}
+.map-legend {
+  font-size: 11px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+.live-summary .metric:last-child:nth-child(4) {
+  grid-column: 1 / -1;
+}
+
+.activity-map .session-controls {
+  position: static;
+  margin-top: 8px;
+}
