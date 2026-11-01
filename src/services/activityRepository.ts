@@ -22,6 +22,7 @@ export function validSession(value: unknown): value is Session {
     Array.isArray(s.measurements) &&
     s.measurements.every(
       (m) =>
+        !!m &&
         m.session_id === s.id &&
         [m.timestamp, m.elapsed, m.distance, m.speed, m.acceleration].every(
           Number.isFinite,
@@ -36,6 +37,7 @@ export function validSession(value: unknown): value is Session {
     Array.isArray(s.splits) &&
     s.splits.every(
       (x) =>
+        !!x &&
         x.session_id === s.id &&
         x.kilometer > 0 &&
         Number.isFinite(x.time) &&
@@ -45,6 +47,7 @@ export function validSession(value: unknown): value is Session {
     Array.isArray(s.events) &&
     s.events.every(
       (x) =>
+        !!x &&
         x.session_id === s.id &&
         ["brake", "accelerate", "over"].includes(x.type) &&
         Number.isFinite(x.value),
@@ -73,6 +76,45 @@ export function enqueue(session: Session) {
     key(session.user_id),
     JSON.stringify(mergeSessions(pendingSessions(session.user_id), [session])),
   );
+}
+// Stable per-account IDs allow explicit imports on shared devices without
+// colliding with another account's primary keys or duplicating retries.
+export async function importActivity(
+  session: Session,
+  owner: string,
+): Promise<Session> {
+  const bytes = new Uint8Array(
+    await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(JSON.stringify([owner, session.id])),
+    ),
+  ).slice(0, 16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x80;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(
+    "",
+  );
+  const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return {
+    ...session,
+    id,
+    user_id: owner,
+    measurements: session.measurements.map((m, i) => ({
+      ...m,
+      id: `${id}:m:${i}`,
+      session_id: id,
+    })),
+    splits: session.splits.map((s, i) => ({
+      ...s,
+      id: `${id}:s:${i}`,
+      session_id: id,
+    })),
+    events: session.events.map((e, i) => ({
+      ...e,
+      id: `${id}:e:${i}`,
+      session_id: id,
+    })),
+  };
 }
 export async function synchronize(owner: string) {
   if (!supabase) return [];

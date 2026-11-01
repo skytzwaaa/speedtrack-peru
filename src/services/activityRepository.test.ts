@@ -5,6 +5,7 @@ import {
   pendingSessions,
   validSession,
   synchronize,
+  importActivity,
 } from "./activityRepository";
 import { storageService } from "./storageService";
 import { generateDemo } from "../data/demo";
@@ -49,6 +50,34 @@ describe("private offline history", () => {
     mock.rpc.mockResolvedValue({ error: new Error("offline") });
     await expect(synchronize("alice")).rejects.toThrow("offline");
     expect(pendingSessions("alice")).toEqual([a]);
+  });
+  it("imports idempotently with separate primary keys for every owner", async () => {
+    const original = generateDemo("vehicle");
+    const snapshot = structuredClone(original);
+    const alice = await importActivity(original, "alice");
+    const bob = await importActivity(original, "bob");
+    expect(await importActivity(original, "alice")).toEqual(alice);
+    expect(alice.id).not.toBe(bob.id);
+    expect(alice.id).not.toBe(original.id);
+    expect(validSession(alice)).toBe(true);
+    expect(validSession(bob)).toBe(true);
+    for (const field of ["measurements", "splits", "events"] as const) {
+      const ids = new Set(alice[field].map((row) => row.id));
+      expect(bob[field].every((row) => !ids.has(row.id))).toBe(true);
+    }
+    expect(original).toEqual(snapshot);
+  });
+  it("ignores corrupt rows without losing other cached activities", () => {
+    const session = { ...generateDemo("run"), user_id: "alice" };
+    for (const field of ["measurements", "splits", "events"] as const) {
+      const invalid = { ...session, [field]: [null] };
+      expect(validSession(invalid)).toBe(false);
+      localStorage.setItem(
+        "speedtrack.sessions.alice",
+        JSON.stringify([invalid, session]),
+      );
+      expect(storageService.loadSessions("alice")).toEqual([session]);
+    }
   });
   it("removes only acknowledged entries and reads cloud history", async () => {
     const a = { ...generateDemo("run"), user_id: "alice" };

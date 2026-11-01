@@ -67,6 +67,62 @@ async function tab(page: Page, name: string) {
     .getByRole("button", { name, exact: true })
     .click();
 }
+
+test("an outbox quota failure preserves the draft until recovery can queue it", async ({
+  page,
+}) => {
+  await mocks(page);
+  await page.goto("/");
+  await tab(page, "Perfil");
+  await page.getByLabel("Correo electrónico").fill("alice@example.com");
+  await page
+    .getByLabel("Contraseña (mínimo 8 caracteres)")
+    .fill("test-password");
+  await page
+    .getByRole("button", { name: "Iniciar sesión", exact: true })
+    .click();
+  await expect(page.getByText("Hola, alice")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Historial sincronizado" }),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    const write = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key.startsWith("speedtrack.outbox."))
+        throw new DOMException("Full", "QuotaExceededError");
+      return write.call(this, key, value);
+    };
+  });
+  await tab(page, "Actividad");
+  await page.getByRole("checkbox", { name: /demostración/ }).check();
+  await page
+    .getByRole("button", { name: "Iniciar actividad", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Finalizar", exact: true }).click();
+  await expect(
+    page.getByRole("button", {
+      name: "Recuperar actividad interrumpida en el historial",
+    }),
+  ).toBeVisible();
+  const draftKey = "speedtrack.draft.11111111-1111-4111-8111-111111111111";
+  expect(
+    await page.evaluate((key) => localStorage.getItem(key), draftKey),
+  ).not.toBeNull();
+  await page.reload();
+  await page
+    .getByRole("button", {
+      name: "Recuperar actividad interrumpida en el historial",
+    })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Historial sincronizado" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate((key) => localStorage.getItem(key), draftKey),
+  ).toBeNull();
+  await tab(page, "Historial");
+  await expect(page.locator(".session-card")).toHaveCount(1);
+});
 test("registration and password recovery forms use Supabase Auth contracts", async ({
   page,
 }) => {
@@ -131,6 +187,9 @@ test("registration and password recovery forms use Supabase Auth contracts", asy
     ),
     "test-signature",
   ].join(".");
+  // Opening the email link creates a document navigation; changing only the
+  // fragment of the running app would not initialize Supabase again.
+  await page.goto("about:blank");
   await page.goto(
     `/#access_token=${token}&refresh_token=test-refresh&expires_in=3600&token_type=bearer&type=recovery`,
   );

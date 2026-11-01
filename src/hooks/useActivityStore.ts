@@ -7,6 +7,7 @@ import {
   pendingSessions,
   synchronize,
   validSession,
+  importActivity,
 } from "../services/activityRepository";
 export function useActivityStore(owner: string) {
   const [sessions, setSessions] = useState(() =>
@@ -69,6 +70,9 @@ export function useActivityStore(owner: string) {
           persisted = true;
         } catch {
           setStorageError(true);
+          setSyncState("syncPending");
+          // Keep the recoverable draft until a durable upload queue exists.
+          return false;
         }
         void sync();
       }
@@ -76,13 +80,23 @@ export function useActivityStore(owner: string) {
     },
     [owner, publish, sync],
   );
-  const importLocal = () => {
+  const importLocal = async () => {
+    if (owner === "local-user") return;
     // Keep originals on device. Stable UUIDs make repeated imports idempotent.
     for (const s of storageService
       .loadSessions()
       .filter(validSession)
       .filter((s) => !s.demo && s.end_time))
-      save(s);
+      try {
+        // Preserve IDs of imports made by earlier versions for this account.
+        const existing = current.current.find((x) => x.id === s.id);
+        const imported = existing ?? (await importActivity(s, owner));
+        if (!mounted.current) return;
+        save(imported);
+      } catch {
+        if (mounted.current) setStorageError(true);
+        return;
+      }
   };
   return { sessions, save, storageError, syncState, sync, importLocal };
 }

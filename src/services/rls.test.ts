@@ -2,6 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { generateDemo } from "../data/demo";
+import { importActivity } from "./activityRepository";
 it("executes the migration and isolates all tables and atomic RPC across two users", async () => {
   const db = new PGlite();
   try {
@@ -83,6 +84,29 @@ it("executes the migration and isolates all tables and atomic RPC across two use
     expect(
       (await db.query("select * from public.measurements")).rows,
     ).toHaveLength(a.measurements.length);
+    // The same local activity can be explicitly imported by two accounts.
+    // Check actual SQL primary keys as well as RLS, including child rows.
+    for (const owner of [alice, bob]) {
+      await db.exec(`set request.jwt.claim.sub='${owner}'`);
+      const imported = await importActivity(a, owner);
+      for (let retry = 0; retry < 2; retry++) {
+        await db.query("select public.save_activity($1::jsonb)", [
+          JSON.stringify(imported),
+        ]);
+      }
+      const rows = (
+        await db.query<{ id: string }>("select id from public.sessions")
+      ).rows;
+      expect(rows.filter((row) => row.id === imported.id)).toHaveLength(1);
+      expect(
+        (
+          await db.query(
+            "select * from public.measurements where session_id=$1",
+            [imported.id],
+          )
+        ).rows,
+      ).toHaveLength(a.measurements.length);
+    }
     await db.exec("reset role; set role anon;");
     await expect(db.query("select * from public.sessions")).rejects.toThrow();
   } finally {

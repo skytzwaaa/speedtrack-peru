@@ -157,7 +157,16 @@ export function AccountPanel({
           <button
             className="secondary-button full"
             disabled={active || busy}
-            onClick={importLocal}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await importLocal();
+              } catch {
+                setMessage(t("accountError"));
+              } finally {
+                setBusy(false);
+              }
+            }}
           >
             {t("importLocal")}
           </button>
@@ -167,9 +176,14 @@ export function AccountPanel({
             disabled={active || busy}
             onClick={async () => {
               setBusy(true);
-              const { error } = await supabase!.auth.signOut();
-              if (error) setMessage(t("accountError"));
-              setBusy(false);
+              try {
+                const { error } = await supabase!.auth.signOut();
+                if (error) throw error;
+              } catch {
+                setMessage(t("accountError"));
+              } finally {
+                setBusy(false);
+              }
             }}
           >
             {t("logout")}
