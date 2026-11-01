@@ -15,6 +15,15 @@ export function PhysicsPanel({ session }: { session: Session }) {
       </summary>
       <div className="physics-content">
         <div className="formula">
+          <span>{t("physicsFormula")}</span>
+          <strong>v = d / t</strong>
+          <span>
+            {session.distance.toFixed(2)} km /{" "}
+            {(session.duration / 3600).toFixed(3)} h ≈{" "}
+            {session.avg_speed.toFixed(1)} km/h
+          </span>
+        </div>
+        <div className="formula">
           <span>{t("averageVelocity")}</span>
           <strong>v = Δx / Δt</strong>
         </div>

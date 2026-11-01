@@ -14,11 +14,13 @@ import { useI18n } from "../i18n";
 import { Section } from "./ui";
 export function SpeedChart({ session }: { session: Session }) {
   const { t } = useI18n();
+  const foot = session.type === "run" || session.type === "walk";
+  const unit = foot ? "paceUnit" : "speedUnit";
   const id = useId().replaceAll(":", "");
   return (
     <Section
-      title={t("chart")}
-      action={<span className="tiny-unit">{t("speedUnit")}</span>}
+      title={t(foot ? "paceChart" : "chart")}
+      action={<span className="tiny-unit">{t(unit)}</span>}
     >
       <div
         className="chart"
@@ -27,7 +29,10 @@ export function SpeedChart({ session }: { session: Session }) {
       >
         <ResponsiveContainer width="100%" height={185}>
           <AreaChart
-            data={session.measurements}
+            data={session.measurements.map((m) => ({
+              ...m,
+              plotted: foot ? (m.speed >= 1 ? 60 / m.speed : null) : m.speed,
+            }))}
             margin={{ top: 12, right: 10, bottom: 5, left: -24 }}
           >
             <defs>
@@ -63,8 +68,8 @@ export function SpeedChart({ session }: { session: Session }) {
                 color: "#fff",
               }}
               formatter={(value) => [
-                `${Number(value).toFixed(1)} ${t("speedUnit")}`,
-                t("speed"),
+                `${Number(value).toFixed(1)} ${t(unit)}`,
+                t(foot ? "pace" : "speed"),
               ]}
               labelFormatter={(value) =>
                 `${Math.round(Number(value))} ${t("seconds")}`
@@ -93,7 +98,7 @@ export function SpeedChart({ session }: { session: Session }) {
             ))}
             <Area
               type="monotone"
-              dataKey="speed"
+              dataKey="plotted"
               stroke="#c3f65b"
               strokeWidth={2.5}
               fill={`url(#${id})`}

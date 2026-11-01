@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SpeedTrack Perú</string>
+    <string name="title_activity_main">SpeedTrack Perú</string>
+    <string name="package_name">pe.speedtrack.app</string>
+    <string name="custom_url_scheme">pe.speedtrack.app</string>
+</resources>

@@ -69,7 +69,8 @@ export function calculateSplit(
 export function addMeasurement(session: Session, m: Measurement): Session {
   const measurements = [...session.measurements, m];
   const previous = session.measurements.at(-1);
-  const dt = previous ? Math.max(0, m.elapsed - previous.elapsed) : 0;
+  const dt =
+    previous && !m.break_before ? Math.max(0, m.elapsed - previous.elapsed) : 0;
   const events = [...session.events];
   const add = (type: "brake" | "accelerate" | "over", value: number) =>
     events.push({

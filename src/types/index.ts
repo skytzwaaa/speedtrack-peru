@@ -3,6 +3,9 @@ export type ActivityType = "walk" | "run" | "bike" | "vehicle";
 export type Tab = "home" | "activity" | "vehicle" | "history" | "profile";
 export type SpeedStatus = "normal" | "caution" | "over";
 export interface Measurement {
+  instantaneous_speed?: number;
+  device_speed?: number | null;
+  break_before?: boolean;
   id: string;
   session_id: string;
   timestamp: number;
@@ -30,6 +33,7 @@ export interface Split {
   pace: number;
 }
 export interface Session {
+  navigation?: NavigationPlan;
   id: string;
   user_id: string;
   type: ActivityType;
@@ -49,6 +53,17 @@ export interface Session {
   above_limit: number;
   goal: number | null;
 }
+export type Coordinate = [number, number];
+export interface RoutePlan {
+  coordinates: Coordinate[];
+  distance: number;
+  duration: number;
+  profile: string;
+}
+export interface NavigationPlan {
+  destination: Coordinate;
+  route?: RoutePlan;
+}
 export interface Settings {
   id: string;
   user_id: string;
@@ -57,6 +72,8 @@ export interface Settings {
   voice_enabled: boolean;
   voice_language: Language;
   voice_volume: number;
+  voice_fallback?: "off" | "es" | "en";
+  progress_alerts?: boolean;
   kilometer_alerts: boolean;
   safety_alerts: boolean;
   approaching_alerts: boolean;

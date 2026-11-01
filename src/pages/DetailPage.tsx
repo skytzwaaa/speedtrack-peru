@@ -125,7 +125,11 @@ export function DetailPage({
         </div>
       </Section>
       <Section title={t("route")}>
-        <RouteMap measurements={s.measurements} />
+        <RouteMap
+          measurements={s.measurements}
+          mode={s.type}
+          navigation={s.navigation}
+        />
       </Section>
       <PhysicsPanel session={s} />
       {vehicle && <p className="footnote">{t("reference")}</p>}

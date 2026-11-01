@@ -1,5 +1,131 @@
 import type { es } from "./es";
 export const en: Record<keyof typeof es, string> = {
+  authEmailExists:
+    "This email is already registered. Sign in or reset your password.",
+  authEmailInvalid: "Enter a valid email address you can access.",
+  authPasswordInvalid:
+    "The password does not meet the requirements. Use at least 8 characters and combine letters, numbers and symbols.",
+  authPasswordSame: "Choose a password different from your previous one.",
+  authConfirmationPending:
+    "Confirm your email before signing in. Check spam too.",
+  authCredentialsInvalid:
+    "The email or password is incorrect. Check your details or reset your password.",
+  authRateLimit:
+    "Too many attempts or emails. Wait a few minutes before trying again.",
+  authNetwork:
+    "Could not connect. Check your Internet connection and try again. Your local activities remain available.",
+  authConfiguration:
+    "Account access is not configured correctly. Contact the app administrator.",
+  authMailConfiguration:
+    "The email service cannot send this message yet. The administrator needs to review the app's email configuration.",
+  authLinkExpired:
+    "This link expired, was already used or belongs to another browser. Request a new one and open it on the device where you requested it.",
+  authUnknown:
+    "Could not complete the operation. Try again; if it persists, share the error reference with the administrator.",
+  authReference: "Reference: {code} ({status})",
+  authSignupSent:
+    "Check your email to confirm your account. If you already had an account, sign in or reset your password.",
+  authRecoverySent:
+    "If an account exists for this email, you will receive a password reset link. Check spam too.",
+  authPasswordUpdated:
+    "Password updated. You can now sign in with your new password.",
+  authConfirmed: "Email confirmed. Your session is ready.",
+  routeOptions: "Route options",
+  zoomIn: "Zoom in",
+  zoomOut: "Zoom out",
+  mapAttribution: "Map attribution",
+  mapFeedback: "Map feedback",
+  weekday0: "Sun",
+  weekday1: "Mon",
+  weekday2: "Tue",
+  weekday3: "Wed",
+  weekday4: "Thu",
+  weekday5: "Fri",
+  weekday6: "Sat",
+
+  arrivalVoice: "You have arrived at your destination.",
+  instantaneousSpeed: "Instantaneous speed",
+  loading: "Loading…",
+  mapLegend:
+    "Green: recorded track · blue/white: remaining route · flag: destination",
+  voiceFallback: "Fallback voice when app language is unavailable",
+  progressAlerts: "Spoken progress every minute",
+  startVoice: "Activity started.",
+  lowAccuracyVoice: "Low GPS accuracy. Waiting for a better location.",
+  progressVoice:
+    "You have covered {distance} kilometers in {minutes} minutes. Speed: {value} kilometers per hour.",
+  paceVoice: "Pace: {minutes} minutes and {seconds} seconds per kilometer.",
+  remainingVoice: "{value} kilometers remaining.",
+  etaVoice: "Estimated arrival in {minutes} minutes.",
+  account: "Your account",
+  login: "Sign in",
+  register: "Create account",
+  resetPassword: "Reset password",
+  newPassword: "Save new password",
+  name: "Name",
+  email: "Email",
+  password: "Password (at least 8 characters)",
+  saveProfile: "Save profile",
+  logout: "Sign out",
+  checkEmail:
+    "Request completed. Check your email if confirmation is required.",
+  accountError:
+    "Could not complete. Check your details, connection and account configuration.",
+  cloudSetup: "Local mode available. Configure Supabase for accounts and sync.",
+  privacyInfo:
+    "Your activities and locations are saved in your private account. Local mode does not require registration.",
+  finishBeforeAccount: "Finish the activity before changing accounts.",
+  importLocal: "Import my local activities",
+  importInfo:
+    "Imports only real activities from this device into this account. Excludes examples and simulations. Use only if these activities belong to you.",
+  syncing: "Syncing…",
+  synced: "History synced",
+  syncPending: "Sync pending · retry",
+  recoverDraft: "Recover interrupted activity into history",
+  destination: "Destination",
+  mapLocationInfo:
+    "Centering the map requests your location to show the starting point. Recording begins when you start an activity.",
+  selectDestination: "Tap the map to choose a destination.",
+  clearDestination: "Clear destination",
+  centerMap: "Center on my location",
+  follow: "Follow location",
+  routeRequest: "Calculate route",
+  routingUnavailable:
+    "Configure a routing provider to calculate paths. A straight line is not a navigable route.",
+  routeError:
+    "Route unavailable. Retry with a connection or select another destination.",
+  remaining: "Remaining distance",
+  filteredSpeed: "Filtered speed",
+  personalEta: "ETA at your speed",
+  arrival: "Approximate arrival",
+  waitingMovement: "Waiting for movement",
+  providerEta: "Provider ETA",
+  trafficEta: "ETA with traffic",
+  trafficUnavailable: "Traffic unavailable",
+  trafficFlow: "Free flowing",
+  trafficModerate: "Moderate",
+  trafficCongested: "Congested",
+  trafficIncidents: "Incidents and closures",
+  offRoute: "Off route · recalculate",
+  mapError: "Map unavailable. GPS tracking continues.",
+  searchDestination: "Search destination",
+  search: "Search",
+  searchError: "No results or service unavailable.",
+  total: "Real total",
+  monthly: "This month",
+  statistics: "Statistics",
+  realOnly:
+    "Real activities only. Demonstrations do not affect your statistics.",
+  paceChart: "Pace vs. time",
+  nearArrival: "You are close to your destination.",
+  gpsLost: "GPS signal is stale. Waiting for a new measurement.",
+  offlineInfo: "Offline: saving on this device.",
+  routeDistance: "Route distance",
+  privacy: "Privacy",
+  physicsFormula: "Average speed = total distance / active time",
+  simulation: "Simulation",
+  greetUser: "Hello, {name}",
+  settingsPending: "Preferences saved locally; sync pending.",
   app: "SpeedTrack Perú",
   tagline: "Your movement, turned into data.",
   home: "Home",
@@ -33,7 +159,8 @@ export const en: Record<keyof typeof es, string> = {
   demoVehicle: "Vehicle demo",
   demoInfo:
     "45 real seconds · journey time ×40 for sports and ×1 for vehicles. Simulated data.",
-  gpsInfo: "Location permission is requested when you start.",
+  gpsInfo:
+    "Your location measures and draws the journey. Permission is requested when starting or centering the map. Keep the activity open: hiding it pauses recording.",
   start: "Start",
   pause: "Pause",
   resume: "Resume",
@@ -126,7 +253,7 @@ export const en: Record<keyof typeof es, string> = {
   english: "English",
   quechua: "Quechua",
   variant:
-    "Variant: Cusco-Collao Quechua (qu-PE). Partial translation; technical terms remain in Spanish pending linguistic review.",
+    "Variety: Cusco-Collao Quechua (qu-PE). Complete translation draft, pending linguistic review.",
   units: "Unit system",
   metric: "Metric",
   accessibility: "Accessibility",

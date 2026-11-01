@@ -3,3 +3,17 @@ dist/
 *.local
 .npm-cache/
 *.tsbuildinfo
+.env
+.env.*
+!.env.example
+android/local.properties
+android/**/build/
+android/.gradle/
+*.apk
+*.aab
+*.jks
+*.keystore
+test-results/
+playwright-report/
+supabase/.temp/
+/debug.log

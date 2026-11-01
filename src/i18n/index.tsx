@@ -11,7 +11,7 @@ export function translate(
 ) {
   return Object.entries(values).reduce(
     (text, [k, v]) => text.replaceAll(`{${k}}`, String(v)),
-    dictionaries[language][key],
+    dictionaries[language]?.[key] || es[key] || String(key),
   );
 }
 export const I18nContext = createContext<Language>("es");

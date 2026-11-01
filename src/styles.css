@@ -1,4 +1,108 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+.map-canvas {
+  height: 330px;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #223025;
+}
+.navigation-panel {
+  margin: 16px 0;
+}
+.navigation-panel > button {
+  margin-top: 10px;
+}
+.maplibregl-ctrl-attrib {
+  color: #222;
+}
+.maplibregl-ctrl-attrib a {
+  color: #222;
+}
+.account-panel {
+  margin-bottom: 24px;
+}
+.account-panel h2 {
+  font-size: 20px;
+}
+.account-panel label,
+.map-search label {
+  display: block;
+  font-size: 12px;
+  margin: 14px 0;
+}
+.account-panel input,
+.map-search input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px;
+  background: #111a13;
+  border: 1px solid #45523c;
+  color: #edf2e9;
+  border-radius: 10px;
+}
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 15px 0;
+}
+.sync-status {
+  color: #b8d990;
+  font-size: 11px;
+  margin: 0 0 18px;
+  padding: 8px 0;
+}
+.search-result {
+  display: block;
+  text-align: left;
+  padding: 12px;
+  width: 100%;
+  border-bottom: 1px solid #45523c;
+}
+.weekly-bars {
+  display: flex;
+  gap: 10px;
+  padding: 18px 12px;
+  margin-top: 12px;
+}
+.weekly-bars > div {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+}
+.bar-space {
+  height: 85px;
+  display: flex;
+  align-items: flex-end;
+  margin: 10px 0;
+}
+.bar-space i {
+  width: 100%;
+  min-height: 2px;
+  background: var(--lime);
+  border-radius: 5px;
+}
+.activity-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  margin-top: 14px;
+  color: var(--muted);
+}
+.metric strong {
+  overflow-wrap: anywhere;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: 2px solid #c3f65b;
+  outline-offset: 3px;
+}
 :root {
   font-family: "DM Sans", system-ui, sans-serif;
   color: #edf2e9;
@@ -1280,5 +1384,287 @@ input[type="range"] {
   }
   .metric > strong {
     font-size: 19px;
+  }
+}
+
+/* The live map and primary controls stay above optional analysis. */
+.activity-map .map-canvas {
+  height: clamp(250px, 38dvh, 430px);
+}
+.live-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 8px;
+}
+.live-summary .metric {
+  padding: 12px 8px;
+}
+.activity-details > summary {
+  cursor: pointer;
+  padding: 18px 0;
+  color: var(--muted);
+}
+.map-legend {
+  font-size: 11px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+.live-summary .metric:last-child:nth-child(4) {
+  grid-column: 1 / -1;
+}
+
+.activity-map .session-controls {
+  position: static;
+  margin-top: 8px;
+}
+
+/* Active sessions dedicate the viewport to metrics, map and reachable controls. */
+.app-content:has(.live-activity) {
+  padding: 8px 12px 12px;
+}
+.live-activity .page-heading {
+  margin-bottom: 6px;
+}
+.live-activity h1 {
+  font-size: 21px;
+  margin: 0;
+}
+.live-activity .tracker-status {
+  margin: 4px 0;
+  font-size: 10px;
+}
+.live-activity > .muted {
+  margin: 3px 0;
+  font-size: 10px;
+}
+.live-activity .navigation-panel {
+  margin: 6px 0 0;
+}
+.live-activity .map-canvas {
+  height: clamp(200px, 36dvh, 330px);
+  border-radius: 16px;
+}
+.live-activity.mode-vehicle .map-canvas {
+  height: clamp(240px, 43dvh, 390px);
+}
+.sport-summary {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  padding: 8px 14px;
+  margin: 6px 0;
+}
+.sport-summary .primary-metric {
+  grid-row: span 2;
+  align-self: center;
+}
+.sport-summary .metric {
+  padding: 4px 0;
+  border: 0;
+}
+.sport-summary .metric strong {
+  margin-top: 2px;
+}
+.sport-summary .primary-metric strong {
+  font-size: clamp(36px, 10vw, 46px);
+  line-height: 1.05;
+}
+.sport-summary .primary-metric small {
+  display: block;
+  margin-top: 4px;
+}
+.secondary-speed {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  color: var(--muted);
+  padding-top: 4px;
+}
+.mode-bike .sport-summary {
+  border-left: 3px solid var(--lime);
+}
+.live-navigation {
+  padding: 8px 12px;
+  margin-top: 6px;
+}
+.destination-label {
+  margin: 0;
+  font-size: 10px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.navigation-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.mode-vehicle .navigation-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.navigation-metrics .metric {
+  padding: 5px 0 0;
+  border: 0;
+}
+.navigation-metrics .metric strong {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.navigation-metrics .metric:first-child strong {
+  font-size: 21px;
+}
+.vehicle-summary {
+  float: left;
+  margin: 6px 0;
+}
+.vehicle-summary .metric {
+  padding: 0;
+  border: 0;
+}
+.vehicle-summary .metric strong {
+  font-size: 25px;
+  margin: 0;
+}
+.recenter-button {
+  float: right;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.live-activity .session-controls {
+  clear: both;
+  padding: 4px 0;
+  margin-top: 4px;
+  gap: 8px;
+}
+.live-activity .session-controls button {
+  min-height: 44px;
+}
+.route-options {
+  clear: both;
+}
+.route-options > summary,
+.live-activity .activity-details > summary {
+  padding: 10px 4px;
+  min-height: 40px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+}
+.navigation-panel:not(.live-activity .navigation-panel)
+  > .route-options
+  > summary {
+  display: none;
+}
+.activity-marker {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #c3f65b;
+  color: #152016;
+  border: 2px solid #152016;
+  box-shadow: 0 2px 8px #0008;
+  pointer-events: none;
+}
+.activity-marker svg {
+  width: 25px;
+  height: 25px;
+}
+.marker-destination {
+  background: #ff977b;
+  border-radius: 10px;
+}
+@media (max-height: 740px) {
+  .live-activity .map-canvas {
+    height: 27dvh;
+    min-height: 170px;
+  }
+  .live-activity.mode-vehicle .map-canvas {
+    height: 34dvh;
+    min-height: 200px;
+  }
+  .live-activity .page-heading {
+    margin: 0;
+  }
+  .sport-summary .primary-metric strong {
+    font-size: 34px;
+  }
+}
+
+.live-activity:not(.mode-vehicle)
+  .navigation-panel:has(.live-navigation)
+  .map-canvas {
+  height: clamp(160px, calc(36dvh - 110px), 230px);
+}
+@media (max-height: 740px) {
+  .live-activity .sport-summary {
+    padding: 4px 12px;
+  }
+  .live-activity .sport-summary .metric strong {
+    font-size: 18px;
+  }
+  .live-activity .sport-summary .primary-metric strong {
+    font-size: 30px;
+  }
+  .live-activity .navigation-panel:has(.live-navigation) .map-canvas {
+    height: 160px;
+    min-height: 160px;
+  }
+  .live-activity.mode-vehicle
+    .navigation-panel:has(.live-navigation)
+    .map-canvas {
+    height: 200px;
+  }
+  .live-activity .navigation-metrics .metric strong {
+    font-size: 16px;
+  }
+  .live-activity .navigation-metrics .metric:first-child strong {
+    font-size: 17px;
+  }
+}
+
+.live-activity .session-controls {
+  grid-template-columns: 1fr 1fr 44px;
+}
+.live-activity .session-controls .recenter-button {
+  float: none;
+  padding: 8px;
+  margin: 0;
+}
+.live-navigation.waiting-eta .metric:first-child strong {
+  font-size: 13px;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+@media (max-height: 740px) {
+  .live-activity .eyebrow {
+    margin-bottom: 4px;
+  }
+  .live-activity .sport-summary {
+    margin-top: 4px;
+  }
+  .live-activity .sport-summary .metric {
+    padding: 0;
+  }
+  .live-activity .secondary-speed {
+    line-height: 1.2;
+    padding-top: 0;
+  }
+}
+
+@media (max-height: 740px) {
+  .live-activity .sport-summary {
+    grid-template-columns: 1.15fr 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+  }
+  .live-activity .sport-summary .primary-metric {
+    grid-row: auto;
+  }
+  .live-activity .sport-summary .secondary-speed {
+    grid-column: 1 / -1;
+  }
+  .live-activity .live-navigation > p[role="status"] {
+    margin: 4px 0 0;
+    font-size: 11px;
   }
 }

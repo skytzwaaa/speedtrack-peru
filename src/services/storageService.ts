@@ -1,4 +1,5 @@
 import type { Session, Settings, User } from "../types";
+import { validSession } from "./activityRepository";
 import { seedSessions } from "../data/seed";
 export const defaultSettings: Settings = {
   id: "local-settings",
@@ -7,6 +8,7 @@ export const defaultSettings: Settings = {
   units: "metric",
   voice_enabled: false,
   voice_language: "es",
+  voice_fallback: "es",
   voice_volume: 0.8,
   kilometer_alerts: true,
   safety_alerts: true,
@@ -22,40 +24,51 @@ const read = (key: string): unknown => {
   }
 };
 export const storageService = {
-  loadSessions(): Session[] {
-    const data = read("speedtrack.sessions.v1");
-    if (!Array.isArray(data)) return seedSessions();
-    const valid = data.filter(
-      (s): s is Session =>
-        !!s &&
-        typeof s.id === "string" &&
-        ["walk", "run", "bike", "vehicle"].includes(s.type) &&
-        Number.isFinite(s.duration) &&
-        Number.isFinite(s.distance) &&
-        typeof s.start_time === "string" &&
-        Number.isFinite(Date.parse(s.start_time)) &&
-        Array.isArray(s.measurements) &&
-        Array.isArray(s.splits) &&
-        Array.isArray(s.events),
+  loadSessions(owner = "local-user"): Session[] {
+    const data = read(
+      owner === "local-user"
+        ? "speedtrack.sessions.v1"
+        : `speedtrack.sessions.${owner}`,
     );
-    return valid;
+    if (!Array.isArray(data))
+      return owner === "local-user" ? seedSessions() : [];
+    const valid = data.filter(validSession);
+    return owner === "local-user"
+      ? valid
+      : valid.filter((s) => s.user_id === owner);
   },
-  saveSessions(sessions: Session[]) {
+  saveSessions(sessions: Session[], owner = "local-user") {
     try {
-      localStorage.setItem("speedtrack.sessions.v1", JSON.stringify(sessions));
+      localStorage.setItem(
+        owner === "local-user"
+          ? "speedtrack.sessions.v1"
+          : `speedtrack.sessions.${owner}`,
+        JSON.stringify(sessions),
+      );
       return true;
     } catch {
       return false;
     }
   },
-  loadSettings(): Settings {
-    const raw = read("speedtrack.settings.v1");
-    if (!raw || typeof raw !== "object") return defaultSettings;
+  loadSettings(owner = "local-user"): Settings {
+    const raw = read(
+      owner === "local-user"
+        ? "speedtrack.settings.v1"
+        : `speedtrack.settings.${owner}`,
+    );
+    if (!raw || typeof raw !== "object")
+      return { ...defaultSettings, user_id: owner };
     const s = raw as Partial<Settings>;
     return {
       ...defaultSettings,
       ...s,
+      user_id: owner,
       units: "metric",
+      voice_fallback:
+        s.voice_fallback === "es" || s.voice_fallback === "en" || s.voice_fallback === "off"
+          ? s.voice_fallback
+          : "es",
+      progress_alerts: s.progress_alerts === true,
       voice_volume:
         typeof s.voice_volume === "number" && Number.isFinite(s.voice_volume)
           ? Math.max(0, Math.min(1, s.voice_volume))
@@ -90,17 +103,22 @@ export const storageService = {
           : 50,
     };
   },
-  saveSettings(settings: Settings) {
+  saveSettings(settings: Settings, owner = "local-user") {
     try {
-      localStorage.setItem("speedtrack.settings.v1", JSON.stringify(settings));
+      localStorage.setItem(
+        owner === "local-user"
+          ? "speedtrack.settings.v1"
+          : `speedtrack.settings.${owner}`,
+        JSON.stringify({ ...settings, user_id: owner }),
+      );
       const user: User = {
-        id: "local-user",
+        id: owner,
         name: "",
         email: "",
         language: settings.language,
         voice_enabled: settings.voice_enabled,
       };
-      localStorage.setItem("speedtrack.user.v1", JSON.stringify(user));
+      localStorage.setItem(`speedtrack.user.${owner}`, JSON.stringify(user));
       return true;
     } catch {
       return false;

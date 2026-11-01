@@ -1,3 +1,4 @@
+import { gpsPolicy } from "../utils/gpsFilter";
 import { useState } from "react";
 import {
   Bike,
@@ -10,7 +11,7 @@ import {
   Radio,
   Navigation,
 } from "lucide-react";
-import type { ActivityType, Session, Settings } from "../types";
+import type { ActivityType, Session, Settings, NavigationPlan } from "../types";
 import { useI18n } from "../i18n";
 import { PageHeading, Metric, Section, Toggle } from "../components/ui";
 import { SpeedChart } from "../components/SpeedChart";
@@ -24,46 +25,61 @@ import {
 } from "../utils/physics";
 import { duration, number, pace } from "../utils/formatters";
 interface Props {
+  blockedStart?: boolean;
   vehicle: boolean;
   session: Session | null;
   paused: boolean;
   gpsError: boolean;
+  waitingFix?: boolean;
+  gpsAccuracy?: number | null;
   settings: Settings;
   setLimit: (v: number) => void;
-  start: (type: ActivityType, demo: boolean, goal: number | null) => void;
+  start: (
+    type: ActivityType,
+    demo: boolean,
+    goal: number | null,
+    navigation?: NavigationPlan,
+  ) => void;
+  updateNavigation: (plan: NavigationPlan | undefined) => void;
   finish: () => void;
   togglePause: () => void;
 }
 export function TrackerPage({
+  blockedStart,
   vehicle,
   session,
   paused,
   gpsError,
+  gpsAccuracy,
+  waitingFix,
   settings,
   setLimit,
   start,
+  updateNavigation,
   finish,
   togglePause,
 }: Props) {
   const { t, language } = useI18n();
   const [type, setType] = useState<ActivityType>("run"),
-    [demo, setDemo] = useState(true),
+    [demo, setDemo] = useState(false),
     [goal, setGoal] = useState("");
+  const [navigation, setNavigation] = useState<NavigationPlan>();
   const s =
     session && (session.type === "vehicle") === vehicle ? session : null;
   const current = s?.measurements.at(-1),
-    speed = current?.speed ?? 0,
+    stale = !s?.demo && !!current && (s?.duration ?? 0) - current.elapsed > 10,
+    speed = paused || stale || waitingFix ? 0 : (current?.speed ?? 0),
     status = classifySpeedStatus(speed, s?.limit ?? settings.speed_limit);
   const cycling = (s?.type ?? type) === "bike";
   return (
-    <>
+    <div className={s ? `live-activity mode-${s.type}` : undefined}>
       <PageHeading
-        eyebrow={t(vehicle ? "vehicle" : "physical")}
+        eyebrow={t(s ? s.type : vehicle ? "vehicle" : "physical")}
         title={t(s ? (paused ? "paused" : "active") : "prepare")}
       >
-        <p>{t(vehicle ? "vehicleDesc" : "physicalDesc")}</p>
+        {!s && <p>{t(vehicle ? "vehicleDesc" : "physicalDesc")}</p>}
       </PageHeading>
-      {vehicle && (
+      {vehicle && !s && (
         <div className="driving-notice">
           <ShieldCheck size={20} />
           <p>{t("driving")}</p>
@@ -144,16 +160,27 @@ export function TrackerPage({
                 start(
                   vehicle ? "vehicle" : type,
                   demo,
-                  goal && Number(goal) > 0 ? Number(goal) : null,
+                  goal && Number(goal) > 0 && Number(goal) <= 500
+                    ? Number(goal)
+                    : null,
+                  navigation,
                 )
               }
-              disabled={!!session}
+              disabled={!!session || blockedStart}
             >
               <Play size={19} fill="currentColor" />
               {t(vehicle ? "startVehicle" : "startActivity")}
             </button>
             {session && <p className="muted">{t("sessionActive")}</p>}
           </div>
+          <Section title={t("destination")}>
+            <RouteMap
+              measurements={[]}
+              mode={vehicle ? "vehicle" : type}
+              navigation={navigation}
+              onNavigation={setNavigation}
+            />
+          </Section>
           <div className="preview-orbit">
             <Navigation size={32} />
             <span>
@@ -173,15 +200,21 @@ export function TrackerPage({
               {t(s.demo ? "simulatedTime" : "time")} {duration(s.duration)}
             </span>
           </div>
+          {stale && <p className="notice">{t("gpsLost")}</p>}
+          {(gpsAccuracy ?? current?.accuracy) != null && (
+            <p className="muted">
+              {t("accuracy")}: ±{" "}
+              {Math.round(gpsAccuracy ?? current?.accuracy ?? 0)} {t("meter")}
+            </p>
+          )}
+          {gpsAccuracy != null && gpsAccuracy > gpsPolicy.maxAccuracyM && (
+            <p className="notice" role="status">
+              {t("lowAccuracyVoice")}
+            </p>
+          )}
           {gpsError && (
             <div className="error-message" role="alert">
               <p>{t("locationUnavailable")}</p>
-              <button
-                className="primary-button"
-                onClick={() => start(s.type, true, s.goal)}
-              >
-                {t("useDemo")}
-              </button>
             </div>
           )}
           {!s.demo && !s.measurements.length && !gpsError && (
@@ -189,175 +222,244 @@ export function TrackerPage({
               {t("gpsWaiting")}
             </p>
           )}
-          {vehicle ? (
-            <>
-              <div
-                className={`speedometer ${status}`}
-                role="img"
-                aria-label={`${t("speed")} ${Math.round(speed)} ${t("speedUnit")}`}
-              >
-                <div
-                  className="speedometer-ring"
-                  style={{
-                    background: `conic-gradient(from 225deg,var(--gauge) 0deg ${Math.min(270, (speed / 130) * 270)}deg,#30372f ${Math.min(270, (speed / 130) * 270)}deg 270deg,transparent 270deg 360deg)`,
-                  }}
+          <div className="activity-map">
+            {!vehicle && (
+              <div className="live-summary sport-summary card">
+                <div className="primary-metric">
+                  <Metric
+                    label={t(cycling ? "speed" : "pace")}
+                    value={
+                      cycling
+                        ? number(speed, language, 1)
+                        : pace(calculatePace(speed))
+                    }
+                    unit={t(cycling ? "speedUnit" : "paceUnit")}
+                    accent
+                  />
+                </div>
+                <Metric
+                  label={t("distance")}
+                  value={number(s.distance, language, 2)}
+                  unit={t("distanceUnit")}
                 />
-                <div className="gauge-labels">
-                  <span>0</span>
-                  <span>130</span>
-                </div>
-                <div className="speedometer-value">
-                  <span>{t("speed")}</span>
-                  <strong>{number(speed, language, 0)}</strong>
-                  <small>{t("speedUnit")}</small>
-                </div>
+                <Metric label={t("time")} value={duration(s.duration)} />
+                {!cycling && (
+                  <div className="secondary-speed">
+                    {t("speed")} · {number(speed, language)} {t("speedUnit")}
+                  </div>
+                )}
               </div>
-              <div className={`speed-state ${status}`}>
-                <span>{t(status)}</span>
-                <strong>
-                  {t("limit")}: {s.limit} {t("speedUnit")}
-                </strong>
-                <p>
-                  {t(speed > s.limit ? "above" : "below", {
-                    value: number(Math.abs(s.limit - speed), language, 0),
-                  })}
-                </p>
-              </div>
-              <div className="speed-scale">
-                <span>0</span>
-                <span>30</span>
-                <span>{s.limit}</span>
-                <span>130</span>
-                <i style={{ left: `${Math.min(100, (speed / 130) * 100)}%` }} />
-              </div>
-              <p className="footnote">{t("reference")}</p>
-            </>
-          ) : (
-            <div className="pace-hero">
-              <span>{t(cycling ? "speed" : "pace")}</span>
-              <strong>
-                {cycling ? number(speed, language) : pace(calculatePace(speed))}
-              </strong>
-              <small>{t(cycling ? "speedUnit" : "paceUnit")}</small>
-              <div>
-                <Navigation size={15} />
-                {number(s.distance, language, 2)} {t("distanceUnit")}
-              </div>
-            </div>
-          )}
-          <div className="metric-grid card">
-            <Metric label={t("time")} value={duration(s.duration)} />
-            <Metric
-              label={t("distance")}
-              value={number(s.distance, language, 2)}
-              unit={t("distanceUnit")}
-              accent
+            )}
+            <RouteMap
+              active
+              measurements={s.measurements}
+              mode={s.type}
+              elapsed={s.duration}
+              paused={paused || waitingFix}
+              navigation={s.navigation}
+              onNavigation={updateNavigation}
+              controls={(recenter) => (
+                <>
+                  {vehicle && (
+                    <div className="live-summary vehicle-summary">
+                      <Metric
+                        label={t("speed")}
+                        value={number(speed, language, 0)}
+                        unit={t("speedUnit")}
+                        accent
+                      />
+                    </div>
+                  )}
+                  <div className="session-controls">
+                    <button className="secondary-button" onClick={togglePause}>
+                      {paused ? <Play size={17} /> : <Pause size={17} />}
+                      {t(paused ? "resume" : "pause")}
+                    </button>
+                    <button className="finish-button" onClick={finish}>
+                      <Square size={15} fill="currentColor" />
+                      {t("finish")}
+                    </button>
+                    {recenter}
+                  </div>
+                </>
+              )}
             />
-            <Metric
-              label={t("avgSpeed")}
-              value={number(s.avg_speed, language)}
-              unit={t("speedUnit")}
-            />
-            <Metric
-              label={t("maxSpeed")}
-              value={number(s.max_speed, language)}
-              unit={t("speedUnit")}
-            />
-            <Metric
-              label={t("acceleration")}
-              value={number(current?.acceleration ?? 0, language, 2)}
-              unit={t("accelerationUnit")}
-            />
-            <Metric
-              label={t("maxAcceleration")}
-              value={number(s.max_acceleration, language, 2)}
-              unit={t("accelerationUnit")}
-            />
+          </div>
+          <details className="activity-details">
+            <summary>{t("statistics")}</summary>
             {vehicle ? (
               <>
-                <Metric
-                  label={t("deceleration")}
-                  value={number(
-                    Math.max(0, -(current?.acceleration ?? 0)),
-                    language,
-                    2,
-                  )}
-                  unit={t("accelerationUnit")}
-                />
-                <Metric
-                  label={t("maxDeceleration")}
-                  value={number(s.max_deceleration, language, 2)}
-                  unit={t("accelerationUnit")}
-                />
-                <Metric
-                  label={t("brakes")}
-                  value={s.events.filter((e) => e.type === "brake").length}
-                />
-                <Metric
-                  label={t("accelerations")}
-                  value={s.events.filter((e) => e.type === "accelerate").length}
-                />
-                <Metric
-                  label={t("aboveTime")}
-                  value={duration(s.above_limit)}
-                />
+                <div
+                  className={`speedometer ${status}`}
+                  role="img"
+                  aria-label={`${t("speed")} ${Math.round(speed)} ${t("speedUnit")}`}
+                >
+                  <div
+                    className="speedometer-ring"
+                    style={{
+                      background: `conic-gradient(from 225deg,var(--gauge) 0deg ${Math.min(270, (speed / 130) * 270)}deg,#30372f ${Math.min(270, (speed / 130) * 270)}deg 270deg,transparent 270deg 360deg)`,
+                    }}
+                  />
+                  <div className="gauge-labels">
+                    <span>0</span>
+                    <span>130</span>
+                  </div>
+                  <div className="speedometer-value">
+                    <span>{t("speed")}</span>
+                    <strong>{number(speed, language, 0)}</strong>
+                    <small>{t("speedUnit")}</small>
+                  </div>
+                </div>
+                <div className={`speed-state ${status}`}>
+                  <span>{t(status)}</span>
+                  <strong>
+                    {t("limit")}: {s.limit} {t("speedUnit")}
+                  </strong>
+                  <p>
+                    {t(speed > s.limit ? "above" : "below", {
+                      value: number(Math.abs(s.limit - speed), language, 0),
+                    })}
+                  </p>
+                </div>
+                <div className="speed-scale">
+                  <span>0</span>
+                  <span>30</span>
+                  <span>{s.limit}</span>
+                  <span>130</span>
+                  <i
+                    style={{ left: `${Math.min(100, (speed / 130) * 100)}%` }}
+                  />
+                </div>
+                <p className="footnote">{t("reference")}</p>
               </>
             ) : (
+              <div className="pace-hero">
+                <span>{t(cycling ? "speed" : "pace")}</span>
+                <strong>
+                  {cycling
+                    ? number(speed, language)
+                    : pace(calculatePace(speed))}
+                </strong>
+                <small>{t(cycling ? "speedUnit" : "paceUnit")}</small>
+                <div>
+                  <Navigation size={15} />
+                  {number(s.distance, language, 2)} {t("distanceUnit")}
+                </div>
+              </div>
+            )}
+            <div className="metric-grid card">
+              <Metric
+                label={t("instantaneousSpeed")}
+                value={number(
+                  paused || stale || waitingFix
+                    ? 0
+                    : (current?.instantaneous_speed ?? speed),
+                  language,
+                )}
+                unit={t("speedUnit")}
+              />
+              <Metric label={t("time")} value={duration(s.duration)} />
+              <Metric
+                label={t("distance")}
+                value={number(s.distance, language, 2)}
+                unit={t("distanceUnit")}
+                accent
+              />
+              <Metric
+                label={t("avgSpeed")}
+                value={number(s.avg_speed, language)}
+                unit={t("speedUnit")}
+              />
+              <Metric
+                label={t("maxSpeed")}
+                value={number(s.max_speed, language)}
+                unit={t("speedUnit")}
+              />
+              <Metric
+                label={t("acceleration")}
+                value={number(current?.acceleration ?? 0, language, 2)}
+                unit={t("accelerationUnit")}
+              />
+              <Metric
+                label={t("maxAcceleration")}
+                value={number(s.max_acceleration, language, 2)}
+                unit={t("accelerationUnit")}
+              />
+              {vehicle ? (
+                <>
+                  <Metric
+                    label={t("deceleration")}
+                    value={number(
+                      Math.max(0, -(current?.acceleration ?? 0)),
+                      language,
+                      2,
+                    )}
+                    unit={t("accelerationUnit")}
+                  />
+                  <Metric
+                    label={t("maxDeceleration")}
+                    value={number(s.max_deceleration, language, 2)}
+                    unit={t("accelerationUnit")}
+                  />
+                  <Metric
+                    label={t("brakes")}
+                    value={s.events.filter((e) => e.type === "brake").length}
+                  />
+                  <Metric
+                    label={t("accelerations")}
+                    value={
+                      s.events.filter((e) => e.type === "accelerate").length
+                    }
+                  />
+                  <Metric
+                    label={t("aboveTime")}
+                    value={duration(s.above_limit)}
+                  />
+                </>
+              ) : (
+                <>
+                  <Metric
+                    label={t("speed")}
+                    value={number(speed, language)}
+                    unit={t("speedUnit")}
+                  />
+                  <Metric
+                    label={t("avgPace")}
+                    value={pace(calculateAveragePace(s.distance, s.duration))}
+                    unit={t("paceUnit")}
+                  />
+                </>
+              )}
+            </div>
+            {!vehicle && (
               <>
-                <Metric
-                  label={t("speed")}
-                  value={number(speed, language)}
-                  unit={t("speedUnit")}
-                />
-                <Metric
-                  label={t("avgPace")}
-                  value={pace(calculateAveragePace(s.distance, s.duration))}
-                  unit={t("paceUnit")}
-                />
+                <Section
+                  title={t("progress")}
+                  action={
+                    <span className="tiny-unit">
+                      {t("km")} {Math.floor(s.distance) + 1}
+                    </span>
+                  }
+                >
+                  <div className="progress-track">
+                    <i style={{ width: `${(s.distance % 1) * 100}%` }} />
+                  </div>
+                  {s.goal && (
+                    <p className="muted">
+                      {s.distance >= s.goal
+                        ? t("goalReached")
+                        : `${number(s.distance, language, 2)} / ${s.goal} ${t("distanceUnit")}`}
+                    </p>
+                  )}
+                </Section>
+                <Splits session={s} />
               </>
             )}
-          </div>
-          <div className="session-controls">
-            <button className="secondary-button" onClick={togglePause}>
-              {paused ? <Play size={17} /> : <Pause size={17} />}{" "}
-              {t(paused ? "resume" : "pause")}
-            </button>
-            <button className="finish-button" onClick={finish}>
-              <Square size={15} fill="currentColor" />
-              {t("finish")}
-            </button>
-          </div>
-          {!vehicle && (
-            <>
-              <Section
-                title={t("progress")}
-                action={
-                  <span className="tiny-unit">
-                    {t("km")} {Math.floor(s.distance) + 1}
-                  </span>
-                }
-              >
-                <div className="progress-track">
-                  <i style={{ width: `${(s.distance % 1) * 100}%` }} />
-                </div>
-                {s.goal && (
-                  <p className="muted">
-                    {s.distance >= s.goal
-                      ? t("goalReached")
-                      : `${number(s.distance, language, 2)} / ${s.goal} ${t("distanceUnit")}`}
-                  </p>
-                )}
-              </Section>
-              <Splits session={s} />
-            </>
-          )}
-          <SpeedChart session={s} />
-          <Section title={t("route")}>
-            <RouteMap measurements={s.measurements} />
-          </Section>
-          <PhysicsPanel session={s} />
+            <SpeedChart session={s} />
+            <PhysicsPanel session={s} />
+          </details>
         </>
       )}
-    </>
+    </div>
   );
 }

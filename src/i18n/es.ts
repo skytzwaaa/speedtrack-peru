@@ -1,4 +1,132 @@
 export const es = {
+  authEmailExists:
+    "Este correo ya está registrado. Inicia sesión o recupera tu contraseña.",
+  authEmailInvalid: "Escribe un correo electrónico válido que puedas abrir.",
+  authPasswordInvalid:
+    "La contraseña no cumple los requisitos. Usa al menos 8 caracteres y combina letras, números y símbolos.",
+  authPasswordSame: "Elige una contraseña distinta de la anterior.",
+  authConfirmationPending:
+    "Confirma tu correo antes de iniciar sesión. Revisa también spam.",
+  authCredentialsInvalid:
+    "El correo o la contraseña no coinciden. Revisa tus datos o recupera tu contraseña.",
+  authRateLimit:
+    "Se alcanzó el límite de intentos o correos. Espera unos minutos antes de volver a intentar.",
+  authNetwork:
+    "No pudimos conectar. Comprueba Internet e inténtalo de nuevo. Tus recorridos locales siguen disponibles.",
+  authConfiguration:
+    "El acceso a cuentas no está configurado correctamente. Contacta al responsable de la app.",
+  authMailConfiguration:
+    "El servicio de correo aún no permite enviar este mensaje. El responsable debe revisar la configuración de correo de la app.",
+  authLinkExpired:
+    "El enlace venció, ya fue utilizado o pertenece a otro navegador. Solicita uno nuevo y ábrelo en el dispositivo donde lo pediste.",
+  authUnknown:
+    "No se pudo completar la operación. Inténtalo de nuevo; si continúa, comunica la referencia del error al responsable.",
+  authReference: "Referencia: {code} ({status})",
+  authSignupSent:
+    "Revisa tu correo para confirmar la cuenta. Si ya tenías una, inicia sesión o recupera la contraseña.",
+  authRecoverySent:
+    "Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña. Revisa también spam.",
+  authPasswordUpdated:
+    "Contraseña actualizada. Ya puedes iniciar sesión con la nueva contraseña.",
+  authConfirmed: "Correo confirmado. Tu sesión está lista.",
+  routeOptions: "Opciones de ruta",
+  zoomIn: "Acercar mapa",
+  zoomOut: "Alejar mapa",
+  mapAttribution: "Créditos del mapa",
+  mapFeedback: "Comentarios del mapa",
+  weekday0: "dom",
+  weekday1: "lun",
+  weekday2: "mar",
+  weekday3: "mié",
+  weekday4: "jue",
+  weekday5: "vie",
+  weekday6: "sáb",
+
+  arrivalVoice: "Has llegado al destino.",
+  instantaneousSpeed: "Velocidad instantánea",
+  loading: "Cargando…",
+  mapLegend:
+    "Verde: recorrido realizado · azul/blanco: ruta restante · bandera: destino",
+  voiceFallback: "Voz alternativa si falta el idioma actual",
+  progressAlerts: "Resumen de voz cada minuto",
+  startVoice: "Actividad iniciada.",
+  lowAccuracyVoice: "Precisión GPS baja. Esperando una ubicación más precisa.",
+  progressVoice:
+    "Llevas {distance} kilómetros en {minutes} minutos. Velocidad: {value} kilómetros por hora.",
+  paceVoice: "Ritmo: {minutes} minutos y {seconds} segundos por kilómetro.",
+  remainingVoice: "Quedan {value} kilómetros.",
+  etaVoice: "Llegada estimada en {minutes} minutos.",
+  account: "Tu cuenta",
+  login: "Iniciar sesión",
+  register: "Crear cuenta",
+  resetPassword: "Recuperar contraseña",
+  newPassword: "Guardar nueva contraseña",
+  name: "Nombre",
+  email: "Correo electrónico",
+  password: "Contraseña (mínimo 8 caracteres)",
+  saveProfile: "Guardar perfil",
+  logout: "Cerrar sesión",
+  checkEmail:
+    "Solicitud completada. Revisa tu correo si requiere confirmación.",
+  accountError:
+    "No se pudo completar. Revisa tus datos, conexión y configuración de la cuenta.",
+  cloudSetup:
+    "Modo local disponible. Configura Supabase para acceder a cuentas y sincronización.",
+  privacyInfo:
+    "Tus recorridos y ubicaciones se guardan en tu cuenta privada. Puedes usar el modo local sin registrarte.",
+  finishBeforeAccount: "Finaliza la actividad antes de cambiar de cuenta.",
+  importLocal: "Importar mis recorridos locales",
+  importInfo:
+    "Importa solamente recorridos reales de este dispositivo a esta cuenta. No incluye ejemplos ni simulaciones. Úsalo solo si estos datos son tuyos.",
+  syncing: "Sincronizando…",
+  synced: "Historial sincronizado",
+  syncPending: "Pendiente de sincronizar · reintentar",
+  recoverDraft: "Recuperar actividad interrumpida en el historial",
+  destination: "Destino",
+  mapLocationInfo:
+    "Al centrar el mapa solicitamos tu ubicación para mostrar el punto de partida. El recorrido se registra al iniciar la actividad.",
+  selectDestination: "Toca el mapa para elegir un destino.",
+  clearDestination: "Quitar destino",
+  centerMap: "Centrar en mi ubicación",
+  follow: "Seguir ubicación",
+  routeRequest: "Calcular ruta",
+  routingUnavailable:
+    "Configura el proveedor de rutas para calcular caminos. La línea directa no es una ruta navegable.",
+  routeError:
+    "Ruta no disponible. Reintenta cuando tengas conexión o elige otro destino.",
+  remaining: "Distancia restante",
+  filteredSpeed: "Velocidad filtrada",
+  personalEta: "ETA según tu velocidad",
+  arrival: "Llegada aproximada",
+  waitingMovement: "Esperando movimiento",
+  providerEta: "ETA del proveedor",
+  trafficEta: "ETA con tráfico",
+  trafficUnavailable: "Tráfico no disponible",
+  trafficFlow: "Fluido",
+  trafficModerate: "Moderado",
+  trafficCongested: "Congestionado",
+  trafficIncidents: "Incidentes y cierres",
+  offRoute: "Fuera de ruta · vuelve a calcular",
+  mapError: "Cartografía no disponible. El registro GPS continúa.",
+  searchDestination: "Buscar destino",
+  search: "Buscar",
+  searchError: "No se encontraron resultados o el servicio no está disponible.",
+  total: "Total real",
+  monthly: "Este mes",
+  statistics: "Estadísticas",
+  realOnly:
+    "Solo actividades reales. Las demostraciones no afectan tus estadísticas.",
+  paceChart: "Ritmo vs. tiempo",
+  nearArrival: "Estás cerca de tu destino.",
+  gpsLost: "Señal GPS desactualizada. Esperando una nueva medición.",
+  offlineInfo: "Sin conexión: guardando en el dispositivo.",
+  routeDistance: "Distancia de la ruta",
+  privacy: "Privacidad",
+  physicsFormula: "Rapidez media = distancia total / tiempo activo",
+  simulation: "Simulación",
+  greetUser: "Hola, {name}",
+  settingsPending:
+    "Preferencias guardadas localmente; sincronización pendiente.",
   app: "SpeedTrack Perú",
   tagline: "Tu movimiento convertido en datos.",
   home: "Inicio",
@@ -32,7 +160,8 @@ export const es = {
   demoVehicle: "Demo vehículo",
   demoInfo:
     "45 segundos reales · tiempo del recorrido ×40 en deporte y ×1 en vehículo. Datos simulados.",
-  gpsInfo: "El permiso de ubicación se solicita al iniciar.",
+  gpsInfo:
+    "Usamos tu ubicación para medir y dibujar el recorrido. Solicitamos permiso al iniciar o al centrar el mapa. Mantén la actividad abierta: al ocultarla se pausa.",
   start: "Iniciar",
   pause: "Pausar",
   resume: "Reanudar",
@@ -125,7 +254,7 @@ export const es = {
   english: "English",
   quechua: "Quechua",
   variant:
-    "Variante: Quechua Cusco-Collao (qu-PE). Traducción parcial; términos técnicos en español pendientes de revisión lingüística.",
+    "Variante: Quechua Cusco-Collao (qu-PE). Borrador de traducción completa, pendiente de revisión lingüística.",
   units: "Sistema de unidades",
   metric: "Métrico",
   accessibility: "Accesibilidad",
