@@ -55,7 +55,7 @@ La traducción quechua es un **borrador completo de interfaz**, pendiente de rev
 1. Servicio conservado: **OpenRouteService / HeiGIT**, Directions y geocodificación Pelias.
 2. Cuenta personal HeiGIT y API key Standard con acceso a ambos servicios.
 3. Obtenerla en [registro HeiGIT](https://account.heigit.org/signup) y [panel de cuenta](https://account.heigit.org/). Son los enlaces actuales publicados por [OpenRouteService](https://openrouteservice.org/).
-4. Configurar `.env`: `VITE_ROUTING_API_KEY=tu_clave`; mantener `VITE_ROUTING_URL=https://api.heigit.org/openrouteservice`. Las variables `VITE_*` son visibles en el cliente, no secretos de servidor. También configurarlas en el entorno Preview de Vercel de esta rama y reconstruir web/APK.
+4. Configurar `.env`: `VITE_ROUTING_API_KEY=tu_clave`; mantener `VITE_ROUTING_URL=https://api.heigit.org/openrouteservice` para rutas y `VITE_GEOCODING_URL=https://api.heigit.org/pelias/v1` para búsqueda. Las variables `VITE_*` son visibles en el cliente, no secretos de servidor. También configurarlas en el entorno Preview de Vercel y reconstruir web/APK.
 
 Sin clave no se fabrica ninguna ruta ni ETA navegable. Se pueden registrar actividades, ver el mapa y seleccionar destinos. Los fallos de conexión, cuota o servicio producen estados recuperables.
 

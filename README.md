@@ -1,6 +1,6 @@
 # SpeedTrack Perú · V2
 
-Evolución del proyecto original de Física I: React + Vite + TypeScript, estilo oscuro/verde, actividad deportiva, movilidad y cinemática. Conserva la navegación, las demos, los idiomas, la voz y las pantallas de la V1. Se desarrolla exclusivamente en `feature/speedtrack-v2`; `main` permanece estable.
+Evolución del proyecto original de Física I: React + Vite + TypeScript, estilo oscuro/verde, actividad deportiva, movilidad y cinemática. Conserva la navegación, las demos, los idiomas, la voz y las pantallas de la V1. V2 fue integrada en `main` mediante el merge `8001ba6`; esta revisión continúa en `feature/speedtrack-mejoras-paralelas`.
 
 ## Ejecutar
 
@@ -11,8 +11,8 @@ Requisitos: Node **22.12+** (probado con Node 24), npm y Git.
 ```sh
 git clone https://github.com/zetas13/speedtrack-peru.git
 cd speedtrack-peru
-git switch feature/speedtrack-v2
-npm install
+git switch feature/speedtrack-mejoras-paralelas
+npm ci
 ```
 
 Copiar `.env.example` a `.env` (`Copy-Item .env.example .env` en PowerShell; `cp .env.example .env` en macOS/Linux). El modo local funciona con las variables vacías.
@@ -61,7 +61,7 @@ Las tablas son `profiles`, `sessions`, `measurements`, `splits`, `events` y `use
 
 RLS compara `auth.uid()` con el propietario en todas las tablas. Las claves foráneas compuestas impiden vincular mediciones a sesiones de otro usuario. `save_activity` usa **security invoker** y una transacción para guardar sesión e hijos atómicamente; un reintento con el mismo ID no duplica datos. El trigger de registro crea el perfil. No se almacenan contraseñas manualmente.
 
-La recuperación envía un enlace; al abrirlo en la web, la aplicación permite establecer la nueva contraseña. Para Android, configurar `VITE_AUTH_REDIRECT_URL` con la web HTTPS: el correo se confirma o recupera en el navegador y luego se inicia sesión en la app. Esta versión no registra enlaces profundos de recuperación nativos.
+La recuperación envía un enlace; al abrirlo en la web, la aplicación permite establecer la nueva contraseña. Android registra el enlace profundo `pe.speedtrack.app://auth/callback`; debe autorizarse en las Redirect URLs de Supabase y probarse en un dispositivo. La configuración web `VITE_AUTH_REDIRECT_URL` no sustituye esa dirección nativa. El flujo nativo no se ha validado en un dispositivo en esta revisión.
 
 ### Local, caché y sincronización
 
@@ -106,10 +106,13 @@ El mapa y el registro no necesitan clave de rutas. Para calcular caminos y habil
 
 ```dotenv
 VITE_ROUTING_URL=https://api.heigit.org/openrouteservice
+VITE_GEOCODING_URL=https://api.heigit.org/pelias/v1
 VITE_ROUTING_API_KEY=TU_CLAVE_PUBLICA_RESTRINGIDA
 ```
 
 `routingService` abstrae el proveedor. Caminar/correr usan `foot-walking`, bicicleta `cycling-regular` y vehículo `driving-car`. Seleccionar destino en el mapa, centrar la ubicación y pulsar **Calcular ruta**. Al cambiar de modo no se reutiliza la ruta de otro perfil.
+
+Las URL de rutas y búsqueda son independientes: HeiGIT sirve la búsqueda en Pelias. Para un proveedor alternativo configurar ambas bases por separado. El contrato de migración está documentado por [HeiGIT](https://ask.openrouteservice.org/t/deprecating-api-openrouteservice-org-in-favour-of-api-heigit-org/7912); sin una clave válida no se ha verificado una respuesta real de búsqueda o ruta en esta revisión.
 
 La clave en la web es visible: aplicar las restricciones y cuotas del proveedor o usar un proxy propio compatible. La aplicación no dibuja una línea recta haciéndola pasar por una ruta si el proveedor no está configurado o falla. Búsqueda, rutas y teselas necesitan conexión. No hay descarga de mapas offline ni garantía de disponibilidad de servicios públicos.
 
@@ -173,7 +176,7 @@ Geolocalización tiene adaptador nativo `@capacitor/geolocation` y fallback web.
 
 ## Vercel
 
-Importar el repositorio y seleccionar **`feature/speedtrack-v2` como rama de preview**. Instalar con `npm ci`, compilar con `npm run build`, salida `dist`. Añadir las variables públicas en el entorno de Preview y registrar esa URL en Supabase Auth. `vercel.json` contiene salida, rewrite SPA y cabeceras básicas. No es necesario cambiar ni fusionar `main` para revisar V2. El despliegue no se realizó automáticamente.
+Importar el repositorio y seleccionar la rama de trabajo como preview. Instalar con `npm ci`, compilar con `npm run build`, salida `dist`. Añadir las variables públicas en el entorno de Preview y registrar esa URL en Supabase Auth. `vercel.json` contiene salida, rewrite SPA y cabeceras básicas. No se realizó ni verificó un despliegue en esta revisión.
 
 ## Pruebas y límites de validación
 
@@ -193,11 +196,15 @@ npm audit
 - El build puede advertir del tamaño del módulo MapLibre, que se descarga únicamente al abrir un mapa.
 - Unidades métricas en esta versión; no hay avatar subido, giro a giro, mapas descargables, comandos de voz ni seguimiento continuo con pantalla apagada. Son extensiones futuras, no funciones anunciadas como disponibles.
 
+En la revisión del 2026-11-01, con Node 22.23.4, pasaron typecheck, lint, build y 71 pruebas Vitest; Chromium pasó 14 pruebas E2E con proveedores simulados. `npm audit` reportó 14 vulnerabilidades moderadas en dependencias de desarrollo (`minimatch`/`glob` y sus dependientes); `npm audit --omit=dev` reportó cero. No se aplicó la actualización automática que propone cambios incompatibles. El build advierte sobre chunks mayores de 500 kB.
+
+El APK debug se compiló con Java 21 y SDK 36, y su firma se verificó con `apksigner`. En este equipo no había `.env`, proyecto Supabase enlazado ni dispositivo Android conectado: la compilación funciona en modo local y no acredita correo, backend real, instalación, GPS, voz o enlaces profundos. La validación real descrita en `docs/supabase-validation.md` corresponde a una sesión anterior. Para volver a verificar con servicios reales, usar credenciales y usuarios de prueba autorizados; no ejecutar migraciones remotas sin revisar el historial y contar con autorización.
+
 ## Arquitectura y colaboración
 
 ### Validación del proyecto real
 
-Resultados y límites de esta conexión: [validación Supabase](docs/supabase-validation.md). El APK actual incluye la configuración pública del proyecto real y conserva caché, cola y fallback local.
+Resultados y límites de una validación anterior: [validación Supabase](docs/supabase-validation.md). La configuración incluida en cada APK depende de las variables presentes al compilar; sin ellas funciona en modo local.
 
 Con la CLI autenticada, el proyecto enlazado y `.env` apuntando al mismo proyecto:
 
@@ -218,6 +225,6 @@ El navegador guarda una actividad y la recupera después de logout, borrado de c
 
 `pages/` y `components/` conservan las pantallas originales. `useSession` administra el ciclo de tracking y los avisos; `GpsFilter` filtra las muestras; `useActivityStore` coordina caché/outbox/nube; `useSettings` sincroniza preferencias; `useAuth` usa Supabase Auth. Servicios independientes aíslan GPS, routing, tráfico, voz, borradores y almacenamiento. Diccionarios tipados viven en `src/i18n`.
 
-No subir `.env`, `node_modules`, `dist`, APK, cachés, `local.properties` ni claves. Sí versionar migraciones, lockfile, proyecto Android y su wrapper. Ejecutar verificaciones antes de cada bloque estable y hacer push exclusivamente a `origin/feature/speedtrack-v2`.
+No subir `.env`, `node_modules`, `dist`, APK, cachés, `local.properties` ni claves. Sí versionar migraciones, lockfile, proyecto Android y su wrapper. Comprobar las ramas del equipo antes de integrar cambios y publicar esta revisión únicamente en `origin/feature/speedtrack-mejoras-paralelas`.
 
 Referencias oficiales: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Supabase Auth](https://supabase.com/docs/guides/auth/passwords), [OpenFreeMap](https://openfreemap.org/quick_start/), [MapLibre](https://maplibre.org/maplibre-gl-js/docs/), [Capacitor](https://capacitorjs.com/docs/getting-started/environment-setup), [Geolocation](https://capacitorjs.com/docs/apis/geolocation), [OpenRouteService](https://openrouteservice.org/).

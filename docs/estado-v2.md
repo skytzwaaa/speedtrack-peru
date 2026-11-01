@@ -1,5 +1,7 @@
 # Estado de SpeedTrack V2 — 2026-11-01
 
+**Revisión posterior en `feature/speedtrack-mejoras-paralelas`:** `main` ya contiene V2 en el merge `8001ba6`. El contenido de esta página es histórico; sus instrucciones de ramas, configuración y validaciones deben leerse junto al README actual. La búsqueda HeiGIT usa ahora la base independiente `https://api.heigit.org/pelias/v1`, y Android registra el callback nativo `pe.speedtrack.app://auth/callback`.
+
 **Conexión real posterior:** [validación Supabase](supabase-validation.md) actualiza el estado de migraciones, RLS, Auth, persistencia y APK descrito en este documento histórico.
 
 **Actualización posterior:** la ronda de mapa, precisión, voz e idiomas está descrita en [precision-v2.md](precision-v2.md); reemplaza las limitaciones de voz y cobertura Quechua de este estado histórico.
