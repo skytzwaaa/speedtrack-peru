@@ -1,4 +1,9 @@
-import type { ActivityType, Coordinate, RoutePlan } from "../types";
+import type {
+  ActivityType,
+  Coordinate,
+  RoutePlan,
+  NavigationPlan,
+} from "../types";
 import { providerFetch } from "./request";
 export const routingProfile = (mode: ActivityType) =>
   mode === "vehicle"
@@ -6,6 +11,18 @@ export const routingProfile = (mode: ActivityType) =>
     : mode === "bike"
       ? "cycling-regular"
       : "foot-walking";
+export function navigationForMode(
+  plan: NavigationPlan | undefined,
+  mode: ActivityType,
+): NavigationPlan | undefined {
+  return plan
+    ? {
+        ...plan,
+        route:
+          plan.route?.profile === routingProfile(mode) ? plan.route : undefined,
+      }
+    : undefined;
+}
 export interface RoutingProvider {
   route(
     from: Coordinate,

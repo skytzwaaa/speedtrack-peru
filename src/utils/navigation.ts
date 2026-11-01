@@ -59,9 +59,18 @@ export function routeProgress(position: Coordinate, coordinates: Coordinate[]) {
       projection = p;
     }
   }
-  if (coordinates.length < 2) return { remaining: 0, offRoute: true };
+  if (coordinates.length < 2)
+    return {
+      remaining: 0,
+      offRoute: true,
+      remainingCoordinates: [] as Coordinate[],
+    };
   let remaining = distance(projection, coordinates[index + 1]);
   for (let i = index + 1; i < coordinates.length - 1; i++)
     remaining += distance(coordinates[i], coordinates[i + 1]);
-  return { remaining, offRoute: nearest > 0.1 };
+  return {
+    remaining,
+    offRoute: nearest > 0.1,
+    remainingCoordinates: [projection, ...coordinates.slice(index + 1)],
+  };
 }

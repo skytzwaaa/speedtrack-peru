@@ -3,6 +3,7 @@ export type ActivityType = "walk" | "run" | "bike" | "vehicle";
 export type Tab = "home" | "activity" | "vehicle" | "history" | "profile";
 export type SpeedStatus = "normal" | "caution" | "over";
 export interface Measurement {
+  instantaneous_speed?: number;
   device_speed?: number | null;
   break_before?: boolean;
   id: string;
@@ -71,6 +72,8 @@ export interface Settings {
   voice_enabled: boolean;
   voice_language: Language;
   voice_volume: number;
+  voice_fallback?: "off" | "es" | "en";
+  progress_alerts?: boolean;
   kilometer_alerts: boolean;
   safety_alerts: boolean;
   approaching_alerts: boolean;

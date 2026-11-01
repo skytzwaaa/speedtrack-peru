@@ -7,7 +7,7 @@ import {
   routeProgress,
   userEta,
 } from "./navigation";
-import { routingProfile } from "../services/routingService";
+import { navigationForMode, routingProfile } from "../services/routingService";
 import { generateDemo } from "../data/demo";
 const point = (
   timestamp: number,
@@ -101,5 +101,42 @@ describe("routing and dynamic ETA", () => {
     expect(recentSpeed(samples.slice(0, 4), 3)).toBe(0);
     expect(recentSpeed(samples.slice(0, 5), 4)).toBe(0);
     expect(recentSpeed(samples, 5)).toBe(5);
+  });
+});
+
+it("mode change preserves destination but invalidates the incompatible route", () => {
+  const destination: [number, number] = [1, 1];
+  const plan = {
+    destination,
+    route: {
+      coordinates: [[0, 0], destination] as [number, number][],
+      profile: "cycling-regular",
+      distance: 10,
+      duration: 100,
+    },
+  };
+  expect(navigationForMode(plan, "walk")).toEqual({
+    destination,
+    route: undefined,
+  });
+  expect(navigationForMode(plan, "bike")?.route).toBe(plan.route);
+  expect(navigationForMode(undefined, "vehicle")).toBeUndefined();
+});
+it("remaining geometry starts at projection and malformed routes have no ETA", () => {
+  expect(
+    routeProgress(
+      [0.005, 0],
+      [
+        [0, 0],
+        [0.01, 0],
+      ],
+    ).remainingCoordinates,
+  ).toEqual([
+    [0.005, 0],
+    [0.01, 0],
+  ]);
+  expect(routeProgress([0, 0], [])).toMatchObject({
+    offRoute: true,
+    remainingCoordinates: [],
   });
 });

@@ -28,8 +28,11 @@ export function watchGps(
         watchId = await Geolocation.watchPosition(
           {
             enableHighAccuracy: true,
+            maximumAge: 0,
             timeout: 12000,
             minimumUpdateInterval: 1000,
+            // Capacitor 8 otherwise uses timeout (12 s) as the desired interval.
+            interval: 1000,
           },
           (p, error) => {
             if (stopped) return;
@@ -60,17 +63,25 @@ export function watchGps(
     onError();
     return () => {};
   }
+  let stopped = false;
   const id = navigator.geolocation.watchPosition(
-    (p) =>
+    (p) => {
+      if (stopped) return;
       onPoint({
         latitude: p.coords.latitude,
         longitude: p.coords.longitude,
         timestamp: p.timestamp,
         accuracy: p.coords.accuracy,
         speed: p.coords.speed,
-      }),
-    onError,
+      });
+    },
+    () => {
+      if (!stopped) onError();
+    },
     { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
   );
-  return () => navigator.geolocation.clearWatch(id);
+  return () => {
+    stopped = true;
+    navigator.geolocation.clearWatch(id);
+  };
 }
