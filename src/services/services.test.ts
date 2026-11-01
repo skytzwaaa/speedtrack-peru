@@ -66,7 +66,11 @@ describe("optional device APIs", () => {
     expect(clearWatch).toHaveBeenCalledWith(42);
   });
   it("never substitutes a different language when no Quechua voice exists", () => {
-    const speech = { getVoices: () => [{ lang: "es-PE" }], speak: vi.fn() };
+    const speech = {
+      getVoices: () => [{ lang: "es-PE" }],
+      speak: vi.fn(),
+      cancel: vi.fn(),
+    };
     vi.stubGlobal("window", { speechSynthesis: speech });
     vi.stubGlobal("speechSynthesis", speech);
     setVoiceLanguage("qu");

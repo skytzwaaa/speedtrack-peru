@@ -61,6 +61,11 @@ export const storageService = {
       ...defaultSettings,
       ...s,
       units: "metric",
+      voice_fallback:
+        s.voice_fallback === "es" || s.voice_fallback === "en"
+          ? s.voice_fallback
+          : "off",
+      progress_alerts: s.progress_alerts === true,
       voice_volume:
         typeof s.voice_volume === "number" && Number.isFinite(s.voice_volume)
           ? Math.max(0, Math.min(1, s.voice_volume))

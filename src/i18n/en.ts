@@ -1,5 +1,31 @@
 import type { es } from "./es";
 export const en: Record<keyof typeof es, string> = {
+  zoomIn: "Zoom in",
+  zoomOut: "Zoom out",
+  mapAttribution: "Map attribution",
+  mapFeedback: "Map feedback",
+  weekday0: "Sun",
+  weekday1: "Mon",
+  weekday2: "Tue",
+  weekday3: "Wed",
+  weekday4: "Thu",
+  weekday5: "Fri",
+  weekday6: "Sat",
+
+  arrivalVoice: "You have arrived at your destination.",
+  instantaneousSpeed: "Instantaneous speed",
+  loading: "Loading…",
+  mapLegend:
+    "O: origin · X: location · Y: destination · green: recorded · blue: recommended · white: remaining",
+  voiceFallback: "Fallback voice when app language is unavailable",
+  progressAlerts: "Spoken progress every minute",
+  startVoice: "Activity started.",
+  lowAccuracyVoice: "Low GPS accuracy. Waiting for a better location.",
+  progressVoice:
+    "You have covered {distance} kilometers in {minutes} minutes. Speed: {value} kilometers per hour.",
+  paceVoice: "Pace: {minutes} minutes and {seconds} seconds per kilometer.",
+  remainingVoice: "{value} kilometers remaining.",
+  etaVoice: "Estimated arrival in {minutes} minutes.",
   account: "Your account",
   login: "Sign in",
   register: "Create account",
@@ -102,7 +128,8 @@ export const en: Record<keyof typeof es, string> = {
   demoVehicle: "Vehicle demo",
   demoInfo:
     "45 real seconds · journey time ×40 for sports and ×1 for vehicles. Simulated data.",
-  gpsInfo: "Your location measures and draws the journey. Permission is requested when starting or centering the map. Keep the activity open: hiding it pauses recording.",
+  gpsInfo:
+    "Your location measures and draws the journey. Permission is requested when starting or centering the map. Keep the activity open: hiding it pauses recording.",
   start: "Start",
   pause: "Pause",
   resume: "Resume",
@@ -195,7 +222,7 @@ export const en: Record<keyof typeof es, string> = {
   english: "English",
   quechua: "Quechua",
   variant:
-    "Variant: Cusco-Collao Quechua (qu-PE). Partial translation; technical terms remain in Spanish pending linguistic review.",
+    "Variety: Cusco-Collao Quechua (qu-PE). Complete translation draft, pending linguistic review.",
   units: "Unit system",
   metric: "Metric",
   accessibility: "Accessibility",

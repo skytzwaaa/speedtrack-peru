@@ -1,4 +1,30 @@
 export const es = {
+  zoomIn: "Acercar mapa",
+  zoomOut: "Alejar mapa",
+  mapAttribution: "Créditos del mapa",
+  mapFeedback: "Comentarios del mapa",
+  weekday0: "dom",
+  weekday1: "lun",
+  weekday2: "mar",
+  weekday3: "mié",
+  weekday4: "jue",
+  weekday5: "vie",
+  weekday6: "sáb",
+
+  arrivalVoice: "Has llegado al destino.",
+  instantaneousSpeed: "Velocidad instantánea",
+  loading: "Cargando…",
+  mapLegend:
+    "O: origen · X: ubicación · Y: destino · verde: recorrido · azul: ruta recomendada · blanco: restante",
+  voiceFallback: "Voz alternativa si falta el idioma actual",
+  progressAlerts: "Resumen de voz cada minuto",
+  startVoice: "Actividad iniciada.",
+  lowAccuracyVoice: "Precisión GPS baja. Esperando una ubicación más precisa.",
+  progressVoice:
+    "Llevas {distance} kilómetros en {minutes} minutos. Velocidad: {value} kilómetros por hora.",
+  paceVoice: "Ritmo: {minutes} minutos y {seconds} segundos por kilómetro.",
+  remainingVoice: "Quedan {value} kilómetros.",
+  etaVoice: "Llegada estimada en {minutes} minutos.",
   account: "Tu cuenta",
   login: "Iniciar sesión",
   register: "Crear cuenta",
@@ -103,7 +129,8 @@ export const es = {
   demoVehicle: "Demo vehículo",
   demoInfo:
     "45 segundos reales · tiempo del recorrido ×40 en deporte y ×1 en vehículo. Datos simulados.",
-  gpsInfo: "Usamos tu ubicación para medir y dibujar el recorrido. Solicitamos permiso al iniciar o al centrar el mapa. Mantén la actividad abierta: al ocultarla se pausa.",
+  gpsInfo:
+    "Usamos tu ubicación para medir y dibujar el recorrido. Solicitamos permiso al iniciar o al centrar el mapa. Mantén la actividad abierta: al ocultarla se pausa.",
   start: "Iniciar",
   pause: "Pausar",
   resume: "Reanudar",
@@ -196,7 +223,7 @@ export const es = {
   english: "English",
   quechua: "Quechua",
   variant:
-    "Variante: Quechua Cusco-Collao (qu-PE). Traducción parcial; términos técnicos en español pendientes de revisión lingüística.",
+    "Variante: Quechua Cusco-Collao (qu-PE). Borrador de traducción completa, pendiente de revisión lingüística.",
   units: "Sistema de unidades",
   metric: "Métrico",
   accessibility: "Accesibilidad",
