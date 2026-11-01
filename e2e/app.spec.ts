@@ -496,6 +496,7 @@ test("live GPS rejects noise and gaps, preserves destination and track through p
   await expect(
     page.getByRole("button", { name: "Acercar mapa" }),
   ).toBeVisible();
+  await page.getByText("Opciones de ruta", { exact: true }).click();
   await page.locator(".map-canvas").click({ position: { x: 180, y: 150 } });
   await expect(
     page.getByRole("button", { name: "Quitar destino" }),
@@ -580,3 +581,94 @@ test("Quechua covers account, navigation, activity and history without Spanish i
   await page.reload();
   await expect(page.locator(".bottom-nav")).toContainText("Purisqakuna");
 });
+
+for (const [mode, label] of [
+  ["walk", "Caminar"],
+  ["run", "Carrera"],
+  ["bike", "Ciclismo"],
+  ["vehicle", "Vehículo"],
+] as const) {
+  test(`active ${mode} prioritizes its metrics and keeps mobile controls reachable`, async ({
+    page,
+  }) => {
+    await mocks(page);
+    await page.route("https://api.openrouteservice.org/v2/directions/**", (r) =>
+      r.fulfill({
+        json: {
+          features: [
+            {
+              geometry: { coordinates: r.request().postDataJSON().coordinates },
+              properties: { summary: { distance: 500, duration: 300 } },
+            },
+          ],
+        },
+      }),
+    );
+    await page.clock.install();
+    await page.goto("/");
+    await tab(page, mode === "vehicle" ? "Vehículo" : "Actividad");
+    if (mode !== "vehicle")
+      await page.getByRole("button", { name: label, exact: true }).click();
+    await page.getByRole("checkbox", { name: /demostración/ }).check();
+    await page.locator(".setup-card .primary-button").click();
+    await page.clock.runFor(2000);
+    const live = page.locator(`.live-activity.mode-${mode}`);
+    await expect(live).toBeVisible();
+    await expect(live.locator(".live-summary")).toContainText(
+      mode === "walk" || mode === "run" ? "min/km" : "km/h",
+    );
+    await expect(live.locator(`.marker-${mode}`)).toBeVisible();
+    await expect(live.locator(".route-options")).not.toHaveAttribute(
+      "open",
+      "",
+    );
+    const finish = page.getByRole("button", { name: "Finalizar", exact: true });
+    const controls = await finish.boundingBox();
+    const nav = await page.locator(".bottom-nav").boundingBox();
+    expect(controls!.y + controls!.height).toBeLessThanOrEqual(nav!.y);
+    expect(
+      await page
+        .locator(".app-content")
+        .evaluate((el) => el.scrollWidth <= el.clientWidth),
+    ).toBe(true);
+    await page.screenshot({ path: `test-results/activity-${mode}.png` });
+    await page.getByText("Opciones de ruta", { exact: true }).click();
+    await page.locator(".map-canvas").click({ position: { x: 90, y: 90 } });
+    await page
+      .getByRole("button", { name: "Calcular ruta", exact: true })
+      .click();
+    await expect(
+      page.getByText("Distancia de la ruta", { exact: true }),
+    ).toBeVisible();
+    await page.getByText("Opciones de ruta", { exact: true }).click();
+    await expect(live.locator(".marker-destination")).toBeVisible();
+    const destination = await live.locator(".destination-label").textContent();
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 320, height: 640 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.clock.runFor(500);
+      await page.locator(".app-content").evaluate((el) => el.scrollTo(0, 0));
+      const controlBox = await finish.boundingBox();
+      const navBox = await page.locator(".bottom-nav").boundingBox();
+      expect(controlBox!.y + controlBox!.height).toBeLessThanOrEqual(navBox!.y);
+      expect(
+        await page
+          .locator(".app-content")
+          .evaluate((el) => el.scrollWidth <= el.clientWidth),
+      ).toBe(true);
+      await page.screenshot({
+        path: `test-results/activity-${mode}-destination-${viewport.width}.png`,
+      });
+    }
+    await page.getByRole("button", { name: "Pausar", exact: true }).click();
+    await expect(live.locator(".destination-label")).toHaveText(destination!);
+    await expect(live.locator(".marker-destination")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "En pausa" })).toBeVisible();
+    await page.getByRole("button", { name: "Reanudar", exact: true }).click();
+    await expect(live.locator(".destination-label")).toHaveText(destination!);
+    await finish.click();
+  });
+}

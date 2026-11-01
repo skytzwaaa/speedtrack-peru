@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { GpsFilter } from "./gpsFilter";
 import {
+  movementBearing,
   kmhToMs,
   msToKmh,
   recentSpeed,
@@ -138,5 +139,42 @@ it("remaining geometry starts at projection and malformed routes have no ETA", (
   expect(routeProgress([0, 0], [])).toMatchObject({
     offRoute: true,
     remainingCoordinates: [],
+  });
+});
+
+describe("map marker bearing", () => {
+  const sample = (elapsed: number, longitude: number, extra = {}) => ({
+    id: String(elapsed),
+    session_id: "test",
+    timestamp: elapsed * 1000,
+    elapsed,
+    latitude: 0,
+    longitude,
+    accuracy: 5,
+    speed: 10,
+    acceleration: 0,
+    distance: 0,
+    ...extra,
+  });
+  it("faces east only after moving beyond GPS uncertainty", () => {
+    expect(movementBearing([sample(0, 0), sample(5, 0.0002)], 5)).toBeCloseTo(
+      90,
+    );
+    expect(movementBearing([sample(0, 0), sample(5, 0.00001)], 5)).toBeNull();
+  });
+  it("does not rotate on stale fixes, stationary samples or across a pause", () => {
+    expect(movementBearing([sample(0, 0), sample(5, 0.0002)], 20)).toBeNull();
+    expect(
+      movementBearing([sample(0, 0), sample(5, 0.0002, { speed: 0 })], 5),
+    ).toBeNull();
+    expect(
+      movementBearing(
+        [sample(0, 0), sample(5, 0.0002, { break_before: true })],
+        5,
+      ),
+    ).toBeNull();
+    expect(
+      movementBearing([sample(0, 0), sample(5, 0.0002, { accuracy: 100 })], 5),
+    ).toBeNull();
   });
 });
