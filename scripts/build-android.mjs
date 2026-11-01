@@ -5,4 +5,7 @@ const result = spawnSync(
   ["assembleDebug"],
   { cwd: "android", stdio: "inherit", shell: windows },
 );
+if (result.error)
+  console.error("Could not start the Gradle wrapper:", result.error.message);
+if (result.signal) console.error(`Gradle was terminated by ${result.signal}.`);
 process.exit(result.status ?? 1);

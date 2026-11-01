@@ -9,6 +9,7 @@ dist/
 android/local.properties
 android/**/build/
 android/.gradle/
+android/.kotlin/
 *.apk
 *.aab
 *.jks
