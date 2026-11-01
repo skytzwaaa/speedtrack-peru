@@ -1,6 +1,7 @@
 import type { TranslationKey } from "./es";
 // Cusco-Collao draft. Requires native-speaker linguistic review.
 export const qu: Record<TranslationKey, string> = {
+  routeOptions: "Purina ñan akllanakuna",
   zoomIn: "Mapata qayllachiy",
   zoomOut: "Mapata karunchay",
   mapAttribution: "Mapa ruraqkuna",
@@ -270,8 +271,7 @@ export const qu: Record<TranslationKey, string> = {
   resetView: "Qallariyman kutiy",
   instantaneousSpeed: "Chay pachapi utqay kay",
   loading: "Apamuchkan…",
-  mapLegend:
-    "O: qallariy · X: kasqayki · Y: chayana · q’umir: purisqa · anqas: ñan · yuraq: puchuq ñan",
+  mapLegend: "Q’umir: purisqa · anqas/yuraq: puchuq ñan · wiphala: chayana",
   voiceFallback: "Kay simi mana kanchu chayqa huk simipi rimay",
   progressAlerts: "Sapa minutupi purisqamanta rimay",
   startVoice: "Kuyuy qallarisqa.",

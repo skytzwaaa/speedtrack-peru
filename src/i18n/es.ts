@@ -1,4 +1,5 @@
 export const es = {
+  routeOptions: "Opciones de ruta",
   zoomIn: "Acercar mapa",
   zoomOut: "Alejar mapa",
   mapAttribution: "Créditos del mapa",
@@ -15,7 +16,7 @@ export const es = {
   instantaneousSpeed: "Velocidad instantánea",
   loading: "Cargando…",
   mapLegend:
-    "O: origen · X: ubicación · Y: destino · verde: recorrido · azul: ruta recomendada · blanco: restante",
+    "Verde: recorrido realizado · azul/blanco: ruta restante · bandera: destino",
   voiceFallback: "Voz alternativa si falta el idioma actual",
   progressAlerts: "Resumen de voz cada minuto",
   startVoice: "Actividad iniciada.",

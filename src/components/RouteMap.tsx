@@ -12,6 +12,7 @@ export function RouteMap(props: MapProps) {
             {t("loading")}
           </div>
           {props.children}
+          {props.controls?.(null)}
         </>
       }
     >

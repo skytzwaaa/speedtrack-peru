@@ -74,3 +74,51 @@ export function routeProgress(position: Coordinate, coordinates: Coordinate[]) {
     remainingCoordinates: [projection, ...coordinates.slice(index + 1)],
   };
 }
+
+// Only orient a marker when displacement exceeds the uncertainty of both fixes.
+export function movementBearing(
+  samples: Measurement[],
+  elapsed: number,
+): number | null {
+  const last = samples.at(-1);
+  if (
+    !last ||
+    last.break_before ||
+    last.speed < 1 ||
+    elapsed - last.elapsed > 10 ||
+    last.latitude == null ||
+    last.longitude == null
+  )
+    return null;
+  for (let i = samples.length - 2; i >= 0; i--) {
+    const previous = samples[i];
+    if (last.elapsed - previous.elapsed > 15) break;
+    if (previous.latitude != null && previous.longitude != null) {
+      const meters =
+        distance(
+          [previous.longitude, previous.latitude],
+          [last.longitude, last.latitude],
+        ) * 1000;
+      if (
+        meters > Math.max(5, (last.accuracy ?? 10) + (previous.accuracy ?? 10))
+      ) {
+        const rad = Math.PI / 180;
+        const lat1 = previous.latitude * rad,
+          lat2 = last.latitude * rad;
+        const delta = (last.longitude - previous.longitude) * rad;
+        return (
+          (Math.atan2(
+            Math.sin(delta) * Math.cos(lat2),
+            Math.cos(lat1) * Math.sin(lat2) -
+              Math.sin(lat1) * Math.cos(lat2) * Math.cos(delta),
+          ) /
+            rad +
+            360) %
+          360
+        );
+      }
+    }
+    if (previous.break_before) break;
+  }
+  return null;
+}

@@ -23,7 +23,6 @@ import {
   calculatePace,
   classifySpeedStatus,
 } from "../utils/physics";
-import { recentSpeed, routeProgress, userEta } from "../utils/navigation";
 import { duration, number, pace } from "../utils/formatters";
 interface Props {
   blockedStart?: boolean;
@@ -71,29 +70,16 @@ export function TrackerPage({
     stale = !s?.demo && !!current && (s?.duration ?? 0) - current.elapsed > 10,
     speed = paused || stale || waitingFix ? 0 : (current?.speed ?? 0),
     status = classifySpeedStatus(speed, s?.limit ?? settings.speed_limit);
-  const progress =
-    s?.navigation?.route &&
-    current?.longitude != null &&
-    current.latitude != null
-      ? routeProgress(
-          [current.longitude, current.latitude],
-          s.navigation.route.coordinates,
-        )
-      : null;
-  const eta =
-    s && progress && !progress.offRoute && !paused && !waitingFix
-      ? userEta(progress.remaining, recentSpeed(s.measurements, s.duration))
-      : null;
   const cycling = (s?.type ?? type) === "bike";
   return (
-    <>
+    <div className={s ? `live-activity mode-${s.type}` : undefined}>
       <PageHeading
-        eyebrow={t(vehicle ? "vehicle" : "physical")}
+        eyebrow={t(s ? s.type : vehicle ? "vehicle" : "physical")}
         title={t(s ? (paused ? "paused" : "active") : "prepare")}
       >
         {!s && <p>{t(vehicle ? "vehicleDesc" : "physicalDesc")}</p>}
       </PageHeading>
-      {vehicle && (
+      {vehicle && !s && (
         <div className="driving-notice">
           <ShieldCheck size={20} />
           <p>{t("driving")}</p>
@@ -237,52 +223,67 @@ export function TrackerPage({
             </p>
           )}
           <div className="activity-map">
-            <Section title={t("route")}>
-              <RouteMap
-                measurements={s.measurements}
-                mode={s.type}
-                elapsed={s.duration}
-                paused={paused || waitingFix}
-                navigation={s.navigation}
-                onNavigation={updateNavigation}
-              >
-                <div className="metric-grid card live-summary">
-                  <Metric label={t("time")} value={duration(s.duration)} />
+            {!vehicle && (
+              <div className="live-summary sport-summary card">
+                <div className="primary-metric">
                   <Metric
-                    label={t("distance")}
-                    value={number(s.distance, language, 2)}
-                    unit={t("distanceUnit")}
-                  />
-                  <Metric
-                    label={t(vehicle || cycling ? "filteredSpeed" : "pace")}
+                    label={t(cycling ? "speed" : "pace")}
                     value={
-                      vehicle || cycling
-                        ? number(speed, language)
+                      cycling
+                        ? number(speed, language, 1)
                         : pace(calculatePace(speed))
                     }
-                    unit={t(vehicle || cycling ? "speedUnit" : "paceUnit")}
+                    unit={t(cycling ? "speedUnit" : "paceUnit")}
+                    accent
                   />
-                  {s.navigation && (
-                    <Metric
-                      label={t("personalEta")}
-                      value={
-                        eta !== null ? duration(eta) : t("waitingMovement")
-                      }
-                    />
+                </div>
+                <Metric
+                  label={t("distance")}
+                  value={number(s.distance, language, 2)}
+                  unit={t("distanceUnit")}
+                />
+                <Metric label={t("time")} value={duration(s.duration)} />
+                {!cycling && (
+                  <div className="secondary-speed">
+                    {t("speed")} · {number(speed, language)} {t("speedUnit")}
+                  </div>
+                )}
+              </div>
+            )}
+            <RouteMap
+              active
+              measurements={s.measurements}
+              mode={s.type}
+              elapsed={s.duration}
+              paused={paused || waitingFix}
+              navigation={s.navigation}
+              onNavigation={updateNavigation}
+              controls={(recenter) => (
+                <>
+                  {vehicle && (
+                    <div className="live-summary vehicle-summary">
+                      <Metric
+                        label={t("speed")}
+                        value={number(speed, language, 0)}
+                        unit={t("speedUnit")}
+                        accent
+                      />
+                    </div>
                   )}
-                </div>
-                <div className="session-controls">
-                  <button className="secondary-button" onClick={togglePause}>
-                    {paused ? <Play size={17} /> : <Pause size={17} />}{" "}
-                    {t(paused ? "resume" : "pause")}
-                  </button>
-                  <button className="finish-button" onClick={finish}>
-                    <Square size={15} fill="currentColor" />
-                    {t("finish")}
-                  </button>
-                </div>
-              </RouteMap>
-            </Section>
+                  <div className="session-controls">
+                    <button className="secondary-button" onClick={togglePause}>
+                      {paused ? <Play size={17} /> : <Pause size={17} />}
+                      {t(paused ? "resume" : "pause")}
+                    </button>
+                    <button className="finish-button" onClick={finish}>
+                      <Square size={15} fill="currentColor" />
+                      {t("finish")}
+                    </button>
+                    {recenter}
+                  </div>
+                </>
+              )}
+            />
           </div>
           <details className="activity-details">
             <summary>{t("statistics")}</summary>
@@ -459,6 +460,6 @@ export function TrackerPage({
           </details>
         </>
       )}
-    </>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Map,
+  Marker,
   NavigationControl,
   setWorkerUrl,
   type GeoJSONSource,
@@ -21,13 +22,22 @@ import {
   searchDestinations,
 } from "../services/routingService";
 import { trafficService, type TrafficReport } from "../services/trafficService";
-import { recentSpeed, routeProgress, userEta } from "../utils/navigation";
+import {
+  movementBearing,
+  recentSpeed,
+  routeProgress,
+  userEta,
+} from "../utils/navigation";
 import { duration, number } from "../utils/formatters";
+import { LocateFixed } from "lucide-react";
 import { Metric, Toggle } from "./ui";
 import { watchGps } from "../services/gpsService";
+import { markerElement } from "./mapMarker";
 setWorkerUrl(workerUrl);
 export interface MapProps {
   children?: ReactNode;
+  controls?: (recenter: ReactNode) => ReactNode;
+  active?: boolean;
   measurements: Measurement[];
   mode?: ActivityType;
   elapsed?: number;
@@ -41,7 +51,9 @@ const empty = (): GeoJSON.FeatureCollection => ({
 });
 export default function WorldMap({
   measurements,
+  active = false,
   children,
+  controls,
   mode = "run",
   elapsed = 0,
   paused = false,
@@ -52,6 +64,9 @@ export default function WorldMap({
   const host = useRef<HTMLDivElement>(null),
     map = useRef<Map | null>(null);
   const change = useRef(onNavigation);
+  const editing = useRef(!active);
+  const [editRoute, setEditRoute] = useState(false);
+  const markers = useRef<{ position?: Marker; destination?: Marker }>({});
   const mapLocale = useRef({
     "Map.Title": t("route"),
     "NavigationControl.ZoomIn": t("zoomIn"),
@@ -59,6 +74,7 @@ export default function WorldMap({
     "AttributionControl.ToggleAttribution": t("mapAttribution"),
     "AttributionControl.MapFeedback": t("mapFeedback"),
   });
+  const [, setMapSize] = useState("");
   const [ready, setReady] = useState(false),
     [mapError, setMapError] = useState(false);
   const [follow, setFollow] = useState(!!onNavigation);
@@ -77,7 +93,8 @@ export default function WorldMap({
   const searchRequest = useRef<AbortController | null>(null);
   useEffect(() => {
     change.current = onNavigation;
-  }, [onNavigation]);
+    editing.current = !active || editRoute;
+  }, [onNavigation, active, editRoute]);
   useEffect(() => {
     if (!host.current) return;
     let instance: Map;
@@ -148,15 +165,27 @@ export default function WorldMap({
         setReady(true);
         setMapError(false);
       });
-      instance.on("click", (e) =>
-        change.current?.({ destination: [e.lngLat.lng, e.lngLat.lat] }),
+      instance.on(
+        "click",
+        (e) =>
+          editing.current &&
+          change.current?.({ destination: [e.lngLat.lng, e.lngLat.lat] }),
       );
       instance.on("dragstart", () => setFollow(false));
     } catch {
       setMapError(true);
       return;
     }
+    const resize = new ResizeObserver(([entry]) => {
+      instance.resize();
+      // Refit the active camera after responsive layout changes, even while paused.
+      setMapSize(`${entry.contentRect.width},${entry.contentRect.height}`);
+    });
+    resize.observe(host.current);
     return () => {
+      resize.disconnect();
+      markers.current.position?.remove();
+      markers.current.destination?.remove();
       instance.remove();
       map.current = null;
       stopLocation.current();
@@ -173,6 +202,31 @@ export default function WorldMap({
     navigation?.route?.profile === routingProfile(mode)
       ? navigation.route
       : undefined;
+  const modeLabel = t(mode),
+    destinationLabel = t("destination");
+  useEffect(() => {
+    const m = map.current;
+    if (!ready || !m) return;
+    try {
+      markers.current.position = new Marker({
+        element: markerElement(mode, modeLabel),
+        rotationAlignment: "map",
+      });
+      markers.current.destination = new Marker({
+        element: markerElement("destination", destinationLabel),
+      });
+    } catch {
+      // The GeoJSON circle layer remains available if custom markers fail.
+      markers.current.position?.remove();
+      markers.current.destination?.remove();
+      markers.current = {};
+    }
+    return () => {
+      markers.current.position?.remove();
+      markers.current.destination?.remove();
+      markers.current = {};
+    };
+  }, [ready, mode, modeLabel, destinationLabel]);
   const fitted = useRef(false);
   useEffect(() => {
     const m = map.current;
@@ -238,7 +292,30 @@ export default function WorldMap({
       type: "FeatureCollection",
       features,
     });
-    if (position && follow)
+    if (position) {
+      markers.current.position?.setLngLat(position).addTo(m);
+      markers.current.position?.setRotation(
+        paused ? 0 : (movementBearing(measurements, elapsed) ?? 0),
+      );
+    } else markers.current.position?.remove();
+    if (destination)
+      markers.current.destination?.setLngLat(destination).addTo(m);
+    else markers.current.destination?.remove();
+    if (position && follow && active && destination) {
+      m.fitBounds(
+        [
+          [
+            Math.min(position[0], destination[0]),
+            Math.min(position[1], destination[1]),
+          ],
+          [
+            Math.max(position[0], destination[0]),
+            Math.max(position[1], destination[1]),
+          ],
+        ],
+        { padding: 48, maxZoom: 16, duration: 400 },
+      );
+    } else if (position && follow)
       m.easeTo({
         center: position,
         zoom: Math.max(14, m.getZoom()),
@@ -305,6 +382,7 @@ export default function WorldMap({
       (p) => {
         const c: Coordinate = [p.longitude, p.latitude];
         setLocated(c);
+        setFollow(true);
         map.current?.easeTo({ center: c, zoom: 16 });
         stopLocation.current();
       },
@@ -334,189 +412,265 @@ export default function WorldMap({
   };
   return (
     <div className="navigation-panel">
-      {onNavigation && <p className="muted">{t("selectDestination")}</p>}
+      {onNavigation && (!active || editRoute) && (
+        <p className="muted">{t("selectDestination")}</p>
+      )}
       <div
         ref={host}
         className="map-canvas"
         role="region"
         aria-label={t("route")}
       />
-      {children}
+      {active && destination && (
+        <div
+          className={`live-navigation card ${eta === null ? "waiting-eta" : ""}`}
+        >
+          <p className="destination-label">
+            {t("destination")} · {destination[1].toFixed(4)},{" "}
+            {destination[0].toFixed(4)}
+          </p>
+          <div className="navigation-metrics">
+            <Metric
+              label={t("personalEta")}
+              value={eta !== null ? duration(eta) : t("waitingMovement")}
+              accent
+            />
+            <Metric
+              label={t("remaining")}
+              value={
+                progress && !progress.offRoute
+                  ? number(progress.remaining, language, 2)
+                  : "—"
+              }
+              unit={t("distanceUnit")}
+            />
+            {mode === "vehicle" && (
+              <Metric
+                label={t("arrival")}
+                value={
+                  eta !== null
+                    ? new Date(Date.now() + eta * 1000).toLocaleTimeString(
+                        language === "en" ? "en-US" : "es-PE",
+                        { hour: "2-digit", minute: "2-digit" },
+                      )
+                    : "—"
+                }
+              />
+            )}
+          </div>
+          {progress?.offRoute && <p role="status">{t("offRoute")}</p>}
+          {!route && <p role="status">{t("routeRequest")}</p>}
+          {mode === "vehicle" &&
+            traffic &&
+            Date.now() - Date.parse(traffic.updatedAt) <= 300000 && (
+              <p>
+                {t("trafficEta")}: {duration(traffic.etaSeconds)}
+              </p>
+            )}
+        </div>
+      )}
       {locationError && (
         <p role="alert" className="notice">
           {t("locationUnavailable")}
         </p>
       )}
       {busy && <p role="status">{t("loading")}</p>}
-      <p className="map-legend">{t("mapLegend")}</p>
+
       {mapError && (
         <p className="notice" role="status">
           {t("mapError")}
         </p>
       )}
-      {onNavigation && (
-        <>
-          {!position && <p className="muted">{t("mapLocationInfo")}</p>}
-          <button className="secondary-button full" onClick={center}>
-            {t("centerMap")}
-          </button>
-          <Toggle label={t("follow")} checked={follow} onChange={setFollow} />
-          {routingAvailable && (
-            <form
-              className="map-search"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                searchRequest.current?.abort();
-                const abort = new AbortController();
-                searchRequest.current = abort;
-                setSearchError(false);
-                try {
-                  const found = await searchDestinations(query, abort.signal);
-                  if (!abort.signal.aborted) {
-                    setResults(found);
-                    setSearchError(!found.length);
+
+      {children}
+      {controls?.(
+        <button
+          className="secondary-button recenter-button"
+          aria-label={t("centerMap")}
+          title={t("centerMap")}
+          aria-pressed={follow}
+          onClick={center}
+        >
+          <LocateFixed size={20} />
+        </button>,
+      )}
+      <details
+        className="route-options"
+        open={active ? editRoute : true}
+        onToggle={(event) => setEditRoute(event.currentTarget.open)}
+      >
+        <summary>{t("routeOptions")}</summary>
+        <p className="map-legend">{t("mapLegend")}</p>
+        {onNavigation && (
+          <>
+            {!position && <p className="muted">{t("mapLocationInfo")}</p>}
+            {!active && (
+              <button className="secondary-button full" onClick={center}>
+                {t("centerMap")}
+              </button>
+            )}
+            <Toggle label={t("follow")} checked={follow} onChange={setFollow} />
+            {routingAvailable && (
+              <form
+                className="map-search"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  searchRequest.current?.abort();
+                  const abort = new AbortController();
+                  searchRequest.current = abort;
+                  setSearchError(false);
+                  try {
+                    const found = await searchDestinations(query, abort.signal);
+                    if (!abort.signal.aborted) {
+                      setResults(found);
+                      setSearchError(!found.length);
+                    }
+                  } catch {
+                    if (!abort.signal.aborted) setSearchError(true);
                   }
-                } catch {
-                  if (!abort.signal.aborted) setSearchError(true);
-                }
-              }}
-            >
-              <label>
-                {t("searchDestination")}
-                <input
-                  required
-                  minLength={3}
-                  maxLength={160}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </label>
-              <button className="secondary-button">{t("search")}</button>
-            </form>
-          )}
-          {searchError && <p className="notice">{t("searchError")}</p>}
-          {results.map((r, i) => (
-            <button
-              className="search-result"
-              key={i}
-              onClick={() => {
-                onNavigation({ destination: r.coordinate });
-                setResults([]);
-                map.current?.easeTo({ center: r.coordinate, zoom: 15 });
-                setFollow(false);
-              }}
-            >
-              {r.name}
-            </button>
-          ))}
-        </>
-      )}
-      {destination && (
-        <>
-          <p className="muted">
-            Y · {t("destination")}: {destination[1].toFixed(5)},{" "}
-            {destination[0].toFixed(5)}
-          </p>
-          {onNavigation && (
-            <div className="account-actions">
-              <button
-                className="secondary-button"
-                disabled={busy || !position || !routingAvailable}
-                onClick={() => void calculate()}
+                }}
               >
-                {t("routeRequest")}
-              </button>
+                <label>
+                  {t("searchDestination")}
+                  <input
+                    required
+                    minLength={3}
+                    maxLength={160}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                </label>
+                <button className="secondary-button">{t("search")}</button>
+              </form>
+            )}
+            {searchError && <p className="notice">{t("searchError")}</p>}
+            {results.map((r, i) => (
               <button
-                className="text-button"
-                onClick={() => onNavigation(undefined)}
+                className="search-result"
+                key={i}
+                onClick={() => {
+                  onNavigation({ destination: r.coordinate });
+                  setResults([]);
+                  map.current?.easeTo({ center: r.coordinate, zoom: 15 });
+                  setFollow(false);
+                }}
               >
-                {t("clearDestination")}
+                {r.name}
               </button>
-            </div>
-          )}
-          {!routingAvailable && !route && (
-            <p className="notice">{t("routingUnavailable")}</p>
-          )}
-          {error && (
-            <p className="notice" role="alert">
-              {t("routeError")}
+            ))}
+          </>
+        )}
+        {destination && (
+          <>
+            <p className="muted">
+              {t("destination")}: {destination[1].toFixed(5)},{" "}
+              {destination[0].toFixed(5)}
             </p>
-          )}
-          {progress?.offRoute && <p className="notice">{t("offRoute")}</p>}
-          {route && (
-            <div className="metric-grid card">
-              <Metric
-                label={t("routeDistance")}
-                value={number(route.distance, language, 2)}
-                unit={t("distanceUnit")}
-              />
-              <Metric
-                label={t("providerEta")}
-                value={duration(route.duration)}
-              />
-              {onNavigation && (
-                <>
-                  <Metric
-                    label={t("remaining")}
-                    value={
-                      progress && !progress.offRoute
-                        ? number(progress.remaining, language, 2)
-                        : "—"
-                    }
-                    unit={t("distanceUnit")}
-                  />
-                  <Metric
-                    label={t("filteredSpeed")}
-                    value={number(speed, language)}
-                    unit={t("speedUnit")}
-                  />
-                  <Metric
-                    label={t("personalEta")}
-                    value={eta !== null ? duration(eta) : t("waitingMovement")}
-                  />
-                  <Metric
-                    label={t("arrival")}
-                    value={
-                      eta !== null
-                        ? new Date(Date.now() + eta * 1000).toLocaleTimeString(
-                            language === "en" ? "en-US" : "es-PE",
-                            { hour: "2-digit", minute: "2-digit" },
-                          )
-                        : "—"
-                    }
-                  />
-                </>
-              )}
-            </div>
-          )}
-          {mode === "vehicle" && onNavigation && (
-            <div className="notice">
-              {traffic &&
-              Date.now() - Date.parse(traffic.updatedAt) <= 300000 ? (
-                <div>
-                  {t("trafficEta")}: {duration(traffic.etaSeconds)}
-                  {traffic.condition && (
-                    <p>
-                      {t(
-                        traffic.condition === "flow"
-                          ? "trafficFlow"
-                          : traffic.condition === "moderate"
-                            ? "trafficModerate"
-                            : "trafficCongested",
-                      )}
-                    </p>
-                  )}
-                  {traffic.incidents?.map((x, i) => (
-                    <p key={i}>{x}</p>
-                  ))}
-                </div>
-              ) : (
-                t("trafficUnavailable")
-              )}
-            </div>
-          )}
-        </>
-      )}
+            {onNavigation && (
+              <div className="account-actions">
+                <button
+                  className="secondary-button"
+                  disabled={busy || !position || !routingAvailable}
+                  onClick={() => void calculate()}
+                >
+                  {t("routeRequest")}
+                </button>
+                <button
+                  className="text-button"
+                  onClick={() => onNavigation(undefined)}
+                >
+                  {t("clearDestination")}
+                </button>
+              </div>
+            )}
+            {!routingAvailable && !route && (
+              <p className="notice">{t("routingUnavailable")}</p>
+            )}
+            {error && (
+              <p className="notice" role="alert">
+                {t("routeError")}
+              </p>
+            )}
+            {progress?.offRoute && <p className="notice">{t("offRoute")}</p>}
+            {route && (
+              <div className="metric-grid card">
+                <Metric
+                  label={t("routeDistance")}
+                  value={number(route.distance, language, 2)}
+                  unit={t("distanceUnit")}
+                />
+                <Metric
+                  label={t("providerEta")}
+                  value={duration(route.duration)}
+                />
+                {onNavigation && (
+                  <>
+                    <Metric
+                      label={t("remaining")}
+                      value={
+                        progress && !progress.offRoute
+                          ? number(progress.remaining, language, 2)
+                          : "—"
+                      }
+                      unit={t("distanceUnit")}
+                    />
+                    <Metric
+                      label={t("filteredSpeed")}
+                      value={number(speed, language)}
+                      unit={t("speedUnit")}
+                    />
+                    <Metric
+                      label={t("personalEta")}
+                      value={
+                        eta !== null ? duration(eta) : t("waitingMovement")
+                      }
+                    />
+                    <Metric
+                      label={t("arrival")}
+                      value={
+                        eta !== null
+                          ? new Date(
+                              Date.now() + eta * 1000,
+                            ).toLocaleTimeString(
+                              language === "en" ? "en-US" : "es-PE",
+                              { hour: "2-digit", minute: "2-digit" },
+                            )
+                          : "—"
+                      }
+                    />
+                  </>
+                )}
+              </div>
+            )}
+            {mode === "vehicle" && onNavigation && (
+              <div className="notice">
+                {traffic &&
+                Date.now() - Date.parse(traffic.updatedAt) <= 300000 ? (
+                  <div>
+                    {t("trafficEta")}: {duration(traffic.etaSeconds)}
+                    {traffic.condition && (
+                      <p>
+                        {t(
+                          traffic.condition === "flow"
+                            ? "trafficFlow"
+                            : traffic.condition === "moderate"
+                              ? "trafficModerate"
+                              : "trafficCongested",
+                        )}
+                      </p>
+                    )}
+                    {traffic.incidents?.map((x, i) => (
+                      <p key={i}>{x}</p>
+                    ))}
+                  </div>
+                ) : (
+                  t("trafficUnavailable")
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </details>
     </div>
   );
 }

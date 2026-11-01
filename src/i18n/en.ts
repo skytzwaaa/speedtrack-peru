@@ -1,5 +1,6 @@
 import type { es } from "./es";
 export const en: Record<keyof typeof es, string> = {
+  routeOptions: "Route options",
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",
   mapAttribution: "Map attribution",
@@ -16,7 +17,7 @@ export const en: Record<keyof typeof es, string> = {
   instantaneousSpeed: "Instantaneous speed",
   loading: "Loading…",
   mapLegend:
-    "O: origin · X: location · Y: destination · green: recorded · blue: recommended · white: remaining",
+    "Green: recorded track · blue/white: remaining route · flag: destination",
   voiceFallback: "Fallback voice when app language is unavailable",
   progressAlerts: "Spoken progress every minute",
   startVoice: "Activity started.",
