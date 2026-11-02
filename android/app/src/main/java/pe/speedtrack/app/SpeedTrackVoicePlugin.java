@@ -22,8 +22,9 @@ public class SpeedTrackVoicePlugin extends Plugin {
             waiting.add(action);
             if (engine != null) return;
             engine = new TextToSpeech(getContext(), status -> getActivity().runOnUiThread(() -> {
-                ready = true;
-                if (status != TextToSpeech.SUCCESS) { engine.shutdown(); engine = null; }
+                // Si el motor falla no se marca como listo: la siguiente llamada reintenta.
+                ready = status == TextToSpeech.SUCCESS;
+                if (!ready) { engine.shutdown(); engine = null; }
                 if (engine != null) engine.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                     public void onStart(String id) {}
                     public void onDone(String id) { complete(id); }

@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package pe.speedtrack.app;
 
 import static org.junit.Assert.*;
 
