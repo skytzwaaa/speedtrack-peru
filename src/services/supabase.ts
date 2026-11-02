@@ -14,6 +14,9 @@ export const supabase = config
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        // PKCE: el enlace de correo solo trae un código de un uso; los tokens
+        // nunca viajan en el enlace profundo ni en el hash.
+        flowType: "pkce" as const,
       },
     })
   : null;

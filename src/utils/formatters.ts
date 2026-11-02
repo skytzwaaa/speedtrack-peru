@@ -1,12 +1,18 @@
 import type { Language } from "../types";
+const two = (n: number) => n.toString().padStart(2, "0");
+// mm:ss por debajo de una hora; h:mm:ss a partir de ahí (también para totales).
 export const duration = (seconds: number) => {
   const s = Math.max(0, Math.round(seconds));
-  return `${Math.floor(s / 60)
-    .toString()
-    .padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}:${two(m)}:${two(s % 60)}` : `${two(m)}:${two(s % 60)}`;
 };
-export const pace = (seconds: number) =>
-  seconds > 0 ? duration(seconds) : "—";
+// El ritmo son segundos por km: siempre mm:ss.
+export const pace = (seconds: number) => {
+  if (!(seconds > 0)) return "—";
+  const s = Math.round(seconds);
+  return `${two(Math.floor(s / 60))}:${two(s % 60)}`;
+};
 export const number = (n: number, language: Language, digits = 1) =>
   new Intl.NumberFormat(language === "en" ? "en-US" : "es-PE", {
     minimumFractionDigits: digits,

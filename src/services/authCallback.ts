@@ -15,18 +15,16 @@ export async function acceptAuthCallback(raw: string, client: SupabaseClient) {
   const error = params.get("error_code") || url.searchParams.get("error_code");
   if (error || params.has("error") || url.searchParams.has("error"))
     throw { code: error || "otp_expired" };
+  // Solo PKCE: cualquier app puede lanzar este enlace, así que nunca se
+  // aceptan tokens directos (access_token/refresh_token) desde la URL.
   const code = url.searchParams.get("code");
-  let result;
-  if (code) result = await client.auth.exchangeCodeForSession(code);
-  else {
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token");
-    if (!access_token || !refresh_token) throw { code: "otp_expired" };
-    result = await client.auth.setSession({ access_token, refresh_token });
-  }
+  if (!code) throw { code: "otp_expired" };
+  const result = await client.auth.exchangeCodeForSession(code);
   if (result.error) throw result.error;
   return {
-    recovery: params.get("type") === "recovery",
+    recovery:
+      (result.data as { redirectType?: string | null }).redirectType ===
+      "recovery",
     userId: result.data.user?.id,
   };
 }
