@@ -31,6 +31,10 @@ export class GpsFilter {
   private speed = 0;
   private lastSeen: number | null = null;
   private lastSample: GpsPoint | null = null;
+  // Muchos Android devuelven speed = 0 en todos los fixes aunque haya
+  // movimiento. Un 0 solo cuenta como "parado" si este teléfono ya demostró
+  // reportar velocidad positiva; si no, se decide solo por desplazamiento.
+  private deviceReportsSpeed = false;
   reset() {
     this.previous = null;
     this.lastSeen = null;
@@ -85,21 +89,23 @@ export class GpsFilter {
     const distance = calculateDistance(prev, p);
     const raw = (distance / dt) * 3600;
     if (raw > this.maxSpeeds[mode]) return null; // Never promote a rejected jump to the baseline.
-    const device =
+    let device =
       p.speed !== null && Number.isFinite(p.speed) && p.speed >= 0
         ? p.speed * 3.6
         : null;
+    if (device !== null && device >= this.policy.stationaryKmh)
+      this.deviceReportsSpeed = true;
+    else if (device !== null && !this.deviceReportsSpeed) device = null;
     if (device !== null && device > this.maxSpeeds[mode]) return null;
     // Keep an anchor until displacement clears uncertainty. Device speed alone
     // must never turn stationary coordinate jitter into accumulated distance.
+    const clearanceM = Math.max(
+      this.policy.noiseFloorM,
+      Math.min(prev.accuracy, p.accuracy) * this.policy.noiseAccuracyFraction,
+    );
     const stationary =
       (device !== null && device < this.policy.stationaryKmh) ||
-      distance * 1000 <
-        Math.max(
-          this.policy.noiseFloorM,
-          Math.min(prev.accuracy, p.accuracy) *
-            this.policy.noiseAccuracyFraction,
-        );
+      distance * 1000 < clearanceM;
     const rawSpeed = stationary ? 0 : raw; // v = accepted displacement / time
     const maxA =
       mode === "vehicle"
@@ -111,15 +117,28 @@ export class GpsFilter {
         maxA
     )
       return null;
-    const alpha = 1 - Math.exp(-sampleDt / this.policy.smoothingSeconds);
+    // El peso depende del tiempo que cubre la medición (desde el ancla), no del
+    // intervalo entre fixes: con precisión baja el ancla tarda varios segundos
+    // en superar el ruido y una medición de 6 s no debe pesar como una de 1 s.
+    const alpha =
+      1 - Math.exp(-Math.max(dt, sampleDt) / this.policy.smoothingSeconds);
     // A sub-noise walking step is not evidence of a stop. Hold an established
     // estimate briefly while the anchor gathers enough displacement; a device
     // stop or three seconds without confirmed displacement clears it.
     const pendingMotion =
       stationary &&
       !(device !== null && device < this.policy.stationaryKmh) &&
-      dt <= this.policy.stationaryHoldSeconds &&
-      this.speed >= this.policy.stationaryKmh;
+      this.speed >= this.policy.stationaryKmh &&
+      // Tiempo esperado para superar el ruido a la velocidad actual (con
+      // margen), entre el mínimo configurado y 10 s.
+      dt <=
+        Math.min(
+          10,
+          Math.max(
+            this.policy.stationaryHoldSeconds,
+            (1.5 * clearanceM) / (this.speed / 3.6),
+          ),
+        );
     const speed = stationary
       ? pendingMotion
         ? this.speed

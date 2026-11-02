@@ -88,3 +88,48 @@ describe("precision regression", () => {
     });
   });
 });
+
+describe("movement detection on real phones", () => {
+  // Caminar a 1,4 m/s (~5 km/h) con una muestra por segundo.
+  const walk = (device: number | null, accuracy: number) => {
+    const f = new GpsFilter();
+    f.accept(p(0, 0, device, accuracy), "walk");
+    let distance = 0;
+    const speeds: number[] = [];
+    for (let i = 1; i <= 60; i++) {
+      const r = f.accept(p(i, i * 1.4, device, accuracy), "walk");
+      distance += r?.delta ?? 0;
+      if (r) speeds.push(r.speed);
+    }
+    return { distance, speeds };
+  };
+  it("Android often reports speed 0 for every fix: it must not freeze movement", () => {
+    const { distance, speeds } = walk(0, 10);
+    expect(distance).toBeGreaterThan(0.07); // 84 m reales
+    expect(speeds.at(-1)).toBeGreaterThan(3);
+  });
+  it("walking with 15 m accuracy does not flicker back to 0 km/h", () => {
+    const { distance, speeds } = walk(null, 15);
+    expect(distance).toBeGreaterThan(0.07);
+    const settled = speeds.slice(15);
+    expect(settled.filter((s) => s === 0).length).toBeLessThan(
+      settled.length * 0.1,
+    );
+    expect(Math.min(...settled)).toBeGreaterThan(1.5);
+  });
+  it("a real stop is still detected when the device reports speed", () => {
+    const f = new GpsFilter();
+    f.accept(p(0, 0, 1.4, 5), "walk");
+    for (let i = 1; i <= 20; i++) f.accept(p(i, i * 1.4, 1.4, 5), "walk");
+    for (let i = 21; i <= 30; i++) f.accept(p(i, 28, 0, 5), "walk");
+    expect(f.accept(p(31, 28, 0, 5), "walk")?.speed).toBe(0);
+  });
+  it("jitter while standing still adds no distance even if the phone reports 0", () => {
+    const f = new GpsFilter();
+    f.accept(p(0, 0, 0, 8), "walk");
+    let distance = 0;
+    for (let i = 1; i < 120; i++)
+      distance += f.accept(p(i, Math.sin(i) * 2, 0, 8), "walk")?.delta ?? 0;
+    expect(distance).toBe(0);
+  });
+});
