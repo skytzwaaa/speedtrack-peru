@@ -79,7 +79,13 @@ export function useSession(
     if (!s) return;
     stopGps.current();
     current.current = null;
-    const result = { ...s, end_time: new Date().toISOString() };
+    const onFoot = s.type === "walk" || s.type === "run";
+    const counted = motionRef.current;
+    const result = {
+      ...s,
+      end_time: new Date().toISOString(),
+      ...(onFoot && counted.supported ? { steps: counted.steps } : {}),
+    };
     if (saveRef.current(result)) {
       draftService.clear(owner);
       setDraft(null);

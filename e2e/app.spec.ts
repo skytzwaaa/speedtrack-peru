@@ -377,6 +377,66 @@ test("pause, summary, language and local history of a real activity", async ({
     page.locator(".bottom-nav").getByRole("button", { name: "History" }),
   ).toBeVisible();
 });
+test("a walk keeps the accelerometer steps in the summary and the history", async ({
+  page,
+  context,
+}) => {
+  await mocks(page);
+  await gps(context);
+  // Chromium pide permiso de sensores; en Android ya viene concedido.
+  await context.grantPermissions(["geolocation", "accelerometer", "gyroscope"]);
+  await page.goto("/");
+  await tab(page, "Actividad");
+  await page
+    .getByRole("button", { name: "Iniciar actividad", exact: true })
+    .click();
+  // Acelerómetro sintético: gravedad más un pulso de 2 Hz, como al caminar.
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => {
+        const start = performance.now();
+        const timer = setInterval(() => {
+          const t = (performance.now() - start) / 1000;
+          window.dispatchEvent(
+            new DeviceMotionEvent("devicemotion", {
+              accelerationIncludingGravity: {
+                x: 0,
+                y: 0,
+                z: 9.81 + 4 * Math.sin(2 * Math.PI * 2 * t),
+              },
+            }),
+          );
+          if (t > 4) {
+            clearInterval(timer);
+            done();
+          }
+        }, 20);
+      }),
+  );
+  await expect(
+    page.getByText(/Sensor de movimiento: .* Pasos [1-9]/),
+  ).toBeVisible();
+  const live = await page
+    .getByText(/Pasos \d+/)
+    .first()
+    .textContent();
+  const steps = Number(live!.match(/Pasos (\d+)/)![1]);
+  // 4 s a 2 Hz: unos 8 pasos; se admite margen por el arranque del filtro.
+  expect(steps).toBeGreaterThanOrEqual(4);
+  expect(steps).toBeLessThanOrEqual(10);
+  await page.getByRole("button", { name: "Finalizar", exact: true }).click();
+  await expect(page.getByText("Guardado en tu historial")).toBeVisible();
+  await expect(
+    page.locator(".metric").filter({ hasText: "Pasos" }),
+  ).toContainText(String(steps));
+  const saved = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("speedtrack.sessions.v1")!)[0],
+  );
+  expect(saved.steps).toBe(steps);
+  await page.reload();
+  await tab(page, "Historial");
+  await expect(page.locator(".session-card")).toContainText(`Pasos ${steps}`);
+});
 test("GPS captures real samples and recovers an interrupted draft", async ({
   page,
   context,

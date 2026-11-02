@@ -37,6 +37,11 @@ describe("private offline history", () => {
     expect(mergeSessions([a], [b])).toEqual([b]);
     expect(mergeSessions([a], [a])).toHaveLength(1);
     expect(validSession({ ...a, distance: -1 })).toBe(false);
+    // Los pasos son opcionales; si vienen, deben ser un número no negativo.
+    expect(validSession({ ...a, steps: 120 })).toBe(true);
+    expect(validSession({ ...a, steps: -3 })).toBe(false);
+    expect(validSession({ ...a, steps: "120" })).toBe(false);
+    expect(validSession({ ...a, steps: Number.NaN })).toBe(false);
     expect(
       validSession({
         ...a,

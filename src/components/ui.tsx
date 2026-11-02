@@ -122,6 +122,8 @@ export function SessionCard({
             : session.type === "bike"
               ? `${t("avgSpeed")} ${number(session.avg_speed, language)} ${t("speedUnit")}`
               : `${t("avgPace")} ${pace(calculateAveragePace(session.distance, session.duration))}/${t("distanceUnit")}`}
+          {session.steps != null &&
+            ` · ${t("steps")} ${number(session.steps, language, 0)}`}
         </small>
       </span>
       <ArrowUpRight size={19} />

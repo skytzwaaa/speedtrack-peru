@@ -54,6 +54,9 @@ export function DetailPage({
       </div>
       <div className="metric-grid card">
         <Metric label={t("time")} value={duration(s.duration)} />
+        {s.steps != null && (
+          <Metric label={t("steps")} value={number(s.steps, language, 0)} />
+        )}
         <Metric
           label={t("avgSpeed")}
           value={number(s.avg_speed, language)}

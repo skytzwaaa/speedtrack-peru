@@ -49,6 +49,8 @@ export interface Session {
   events: SessionEvent[];
   splits: Split[];
   demo: boolean;
+  // Pasos del acelerómetro; solo en caminar y correr, ausente en lo demás.
+  steps?: number;
   limit: number;
   above_limit: number;
   goal: number | null;

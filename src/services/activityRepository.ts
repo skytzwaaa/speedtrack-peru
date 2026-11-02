@@ -9,6 +9,7 @@ export function validSession(value: unknown): value is Session {
     typeof s.user_id === "string" &&
     ["walk", "run", "bike", "vehicle"].includes(s.type) &&
     typeof s.demo === "boolean" &&
+    (s.steps === undefined || (Number.isFinite(s.steps) && s.steps >= 0)) &&
     Number.isFinite(Date.parse(s.start_time)) &&
     [
       s.distance,
