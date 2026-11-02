@@ -232,3 +232,7 @@ El navegador guarda una actividad y la recupera después de logout, borrado de c
 No subir `.env`, `node_modules`, `dist`, APK, cachés, `local.properties` ni claves. Sí versionar migraciones, lockfile, proyecto Android y su wrapper. Comprobar las ramas del equipo antes de integrar cambios y publicar esta revisión únicamente en `origin/feature/speedtrack-mejoras-paralelas`.
 
 Referencias oficiales: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Supabase Auth](https://supabase.com/docs/guides/auth/passwords), [OpenFreeMap](https://openfreemap.org/quick_start/), [MapLibre](https://maplibre.org/maplibre-gl-js/docs/), [Capacitor](https://capacitorjs.com/docs/getting-started/environment-setup), [Geolocation](https://capacitorjs.com/docs/apis/geolocation), [OpenRouteService](https://openrouteservice.org/).
+
+## Cuentas sin código de verificación
+
+El registro con correo y contraseña guarda la cuenta en Supabase Auth. Para que **no** se envíe correo de verificación, desactivar "Confirm email" en el panel de Supabase (Authentication > Sign In / Providers > Email). Con eso `signUp` devuelve la sesión y la app inicia sesión de inmediato; si el proyecto sigue exigiendo confirmación, la app muestra "Revisa tu correo". Compromiso: sin verificación cualquiera puede registrar un correo ajeno; la recuperación de contraseña sigue usando correo.

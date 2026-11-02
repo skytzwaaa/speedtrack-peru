@@ -237,6 +237,60 @@ test("registration and password recovery forms use Supabase Auth contracts", asy
   await expect(page.getByText(/Contraseña actualizada/)).toBeVisible();
 });
 
+test("sign up without email confirmation signs in immediately and keeps the session", async ({
+  page,
+}) => {
+  await mocks(page);
+  const id = "11111111-1111-4111-8111-111111111111";
+  const access_token = [
+    btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })),
+    btoa(
+      JSON.stringify({
+        sub: id,
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        role: "authenticated",
+        aud: "authenticated",
+      }),
+    ),
+    "test-signature",
+  ].join(".");
+  const user = {
+    id,
+    email: "alice@example.com",
+    aud: "authenticated",
+    role: "authenticated",
+    user_metadata: { name: "Alice" },
+    created_at: new Date().toISOString(),
+  };
+  await page.route(
+    "https://speedtrack-test.supabase.co/auth/v1/signup**",
+    (r) =>
+      // Con "Confirm email" desactivado el proyecto devuelve la sesión.
+      r.fulfill({
+        json: {
+          access_token,
+          refresh_token: "test-refresh",
+          token_type: "bearer",
+          expires_in: 3600,
+          user,
+        },
+      }),
+  );
+  await page.goto("/");
+  await tab(page, "Perfil");
+  await page.getByRole("button", { name: "Crear cuenta", exact: true }).click();
+  await page.getByLabel("Nombre", { exact: true }).fill("Alice");
+  await page.getByLabel("Correo electrónico").fill(user.email);
+  await page
+    .getByLabel("Contraseña (mínimo 8 caracteres)")
+    .fill("test-password");
+  await page.getByRole("button", { name: "Crear cuenta", exact: true }).click();
+  await expect(page.getByText("Hola, alice")).toBeVisible();
+  await expect(page.getByText(/Revisa tu correo/)).toHaveCount(0);
+  // La sesión persiste al recargar (guardada en el dispositivo).
+  await page.reload();
+  await expect(page.getByText("Hola, alice")).toBeVisible();
+});
 test("Auth reports specific safe errors and expired email links", async ({
   page,
 }) => {

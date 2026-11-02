@@ -1,7 +1,15 @@
-# Only declare the Auth redirects managed by this repository.
+# Only declare the Auth settings managed by this repository.
 # Configure production HTTPS URL and SMTP in the dashboard before public delivery.
 project_id = "hpcpikyxntyvpynzcvyt"
 
 [auth]
 site_url = "http://localhost:5173"
 additional_redirect_urls = ["http://localhost:5173", "http://127.0.0.1:4173", "http://127.0.0.1:4174", "pe.speedtrack.app://auth/callback"]
+
+# Registro con correo y contraseña SIN código/enlace de verificación: la cuenta
+# queda iniciada al crearla. Este valor rige `supabase start` (entorno local).
+# En el proyecto remoto se cambia en el panel: Authentication > Sign In / Providers
+# > Email > "Confirm email" (desactivado). No usar `supabase config push` sin
+# revisar el diff: aplicaría también el resto de ajustes de Auth.
+[auth.email]
+enable_confirmations = false

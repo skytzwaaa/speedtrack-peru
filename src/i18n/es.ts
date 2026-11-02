@@ -22,6 +22,8 @@ export const es = {
   authUnknown:
     "No se pudo completar la operación. Inténtalo de nuevo; si continúa, comunica la referencia del error al responsable.",
   authReference: "Referencia: {code} ({status})",
+  authAccountCreated:
+    "Cuenta creada. Tu sesión está iniciada y tus datos se guardan en tu cuenta.",
   authSignupSent:
     "Revisa tu correo para confirmar la cuenta. Si ya tenías una, inicia sesión o recupera la contraseña.",
   authRecoverySent:

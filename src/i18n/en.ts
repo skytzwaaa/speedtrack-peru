@@ -23,6 +23,8 @@ export const en: Record<keyof typeof es, string> = {
   authUnknown:
     "Could not complete the operation. Try again; if it persists, share the error reference with the administrator.",
   authReference: "Reference: {code} ({status})",
+  authAccountCreated:
+    "Account created. You are signed in and your data is saved to your account.",
   authSignupSent:
     "Check your email to confirm your account. If you already had an account, sign in or reset your password.",
   authRecoverySent:

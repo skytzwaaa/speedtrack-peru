@@ -50,6 +50,7 @@ export function AccountPanel({
     setNotice(null);
     try {
       let error;
+      let signedIn = false;
       if (recovery) ({ error } = await supabase.auth.updateUser({ password }));
       else if (user) {
         ({ error } = await supabase
@@ -59,16 +60,20 @@ export function AccountPanel({
           ({ error } = await supabase.auth.updateUser({
             data: { name: name.trim() },
           }));
-      } else if (mode === "register")
-        ({ error } = await supabase.auth.signUp({
+      } else if (mode === "register") {
+        const result = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
             data: { name: name.trim() },
             emailRedirectTo: authRedirect,
           },
-        }));
-      else if (mode === "resetPassword")
+        });
+        error = result.error;
+        // Sin confirmación por correo (ajuste del proyecto) Supabase devuelve
+        // la sesión de inmediato: la cuenta queda iniciada y guardada.
+        signedIn = !!result.data.session;
+      } else if (mode === "resetPassword")
         ({ error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: authRedirect,
         }));
@@ -84,7 +89,9 @@ export function AccountPanel({
           user
             ? "saved"
             : mode === "register"
-              ? "authSignupSent"
+              ? signedIn
+                ? "authAccountCreated"
+                : "authSignupSent"
               : "authRecoverySent",
         ),
       );

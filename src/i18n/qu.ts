@@ -24,6 +24,8 @@ export const qu: Record<TranslationKey, string> = {
   authUnknown:
     "Manam rurayta tukuyta atikunchu. Yapamanta ruray; hinallapuni kaptin pantaypa yupayninta kamachiqman willay.",
   authReference: "Pantaypa yupaynin: {code} ({status})",
+  authAccountCreated:
+    "Willakuyniyki paqarichisqañam. Qallarisqañam, willakuyniykikunaqa kay willakuypi waqaychasqa kanqa.",
   authSignupSent:
     "Cuentaykita takyachinaykipaq correoykita qhaway. Cuenta kachkasqa kaptinqa yaykuy utaq pakasqa rimayta musuqyachiy.",
   authRecoverySent:
