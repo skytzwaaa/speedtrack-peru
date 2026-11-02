@@ -314,5 +314,12 @@ export const es = {
   best: "Tu progreso empieza aquí",
   sampleLabel: "Recorridos de ejemplo",
   resetView: "Regresar al inicio",
+  motionSensor: "Sensor de movimiento",
+  motionMoving: "en movimiento",
+  motionStill: "quieto",
+  steps: "Pasos",
+  stepsEstimate: "≈ {value} m estimados por pasos",
+  motionNoGps:
+    "El sensor detecta movimiento, pero el GPS no lo confirma. Sal a un lugar abierto y revisa que la ubicación sea precisa.",
 };
 export type TranslationKey = keyof typeof es;

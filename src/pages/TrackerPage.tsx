@@ -1,3 +1,4 @@
+import { useMotion } from "../hooks/useMotion";
 import { gpsPolicy } from "../utils/gpsFilter";
 import { useState } from "react";
 import {
@@ -71,6 +72,10 @@ export function TrackerPage({
     speed = paused || stale || waitingFix ? 0 : (current?.speed ?? 0),
     status = classifySpeedStatus(speed, s?.limit ?? settings.speed_limit);
   const cycling = (s?.type ?? type) === "bike";
+  const motion = useMotion(!!s && !s.demo && !paused, s?.id);
+  const onFoot = s?.type === "walk" || s?.type === "run";
+  // Longitud de paso media: heurística, no una medición.
+  const stride = s?.type === "run" ? 1.0 : 0.72;
   return (
     <div className={s ? `live-activity mode-${s.type}` : undefined}>
       <PageHeading
@@ -201,6 +206,30 @@ export function TrackerPage({
             </span>
           </div>
           {stale && <p className="notice">{t("gpsLost")}</p>}
+          {s && !s.demo && motion.supported && (
+            <p className="muted">
+              {t("motionSensor")}:{" "}
+              {t(motion.moving ? "motionMoving" : "motionStill")}
+              {onFoot && (
+                <>
+                  {" · "}
+                  {t("steps")} {motion.steps} ·{" "}
+                  {t("stepsEstimate", {
+                    value: Math.round(motion.steps * stride),
+                  })}
+                </>
+              )}
+            </p>
+          )}
+          {s &&
+            !s.demo &&
+            motion.supported &&
+            motion.moving &&
+            (stale || waitingFix) && (
+              <p className="notice" role="status">
+                {t("motionNoGps")}
+              </p>
+            )}
           {(gpsAccuracy ?? current?.accuracy) != null && (
             <p className="muted">
               {t("accuracy")}: ±{" "}

@@ -311,6 +311,13 @@ export const qu: Record<TranslationKey, string> = {
   paceVoice: "Sapa kilometropi {minutes} minuto {seconds} segundo.",
   remainingVoice: "{value} kilometro puchuchkan.",
   etaVoice: "{minutes} minutupi chayankiman.",
+  motionSensor: "Kuyuy sensor",
+  motionMoving: "kuyuchkan",
+  motionStill: "mana kuyuchkanchu",
+  steps: "Pasukuna",
+  stepsEstimate: "≈ {value} m pasukunamanta yupasqa",
+  motionNoGps:
+    "Sensorqa kuyuyta rikun, ichaqa GPSqa manaraqmi sut'inchanchu. Kichasqa kitiman lluqsiy.",
 };
 export const quechuaVariant = {
   name: "Quechua Cusco-Collao",

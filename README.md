@@ -98,6 +98,10 @@ La distancia restante se calcula proyectando X sobre la polilínea de la ruta y 
 
 La app prioriza **primer plano**: al ocultarse, pausa y conserva el borrador; al volver se debe reanudar. No solicita ubicación permanente en segundo plano. La suspensión del sistema, túneles, edificios y GPS impreciso pueden dejar tramos sin registrar. La rapidez es escalar; no se confunde con velocidad vectorial. Ninguna medición es certificada.
 
+## Sensor de movimiento
+
+Complementa al GPS con el acelerómetro del teléfono (`DeviceMotionEvent`, sin permisos en Android): indica si hay movimiento y, al caminar o correr, cuenta pasos y muestra una distancia **estimada** (0,72 m por paso al caminar, 1,0 m al correr). Funciona bajo techo. Si el sensor detecta movimiento pero el GPS no confirma posición, avisa en pantalla. No suma a la distancia oficial: en bicicleta y vehículo solo indica movimiento, porque la aceleración no permite calcular una distancia fiable. Los umbrales son heurísticos y están sin calibrar con recorridos reales; en iOS requiere permiso de movimiento. Solo funciona en primer plano y con la pantalla encendida. Código: `src/services/motionService.ts`.
+
 ## Mapas, destinos y rutas
 
 La cartografía usa `https://tiles.openfreemap.org/styles/liberty`, con atribución visible a OpenFreeMap, OpenMapTiles y OpenStreetMap. Se carga de forma diferida para no descargar MapLibre en Inicio.

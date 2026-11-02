@@ -313,4 +313,11 @@ export const en: Record<keyof typeof es, string> = {
   best: "Your progress starts here",
   sampleLabel: "Example journeys",
   resetView: "Return home",
+  motionSensor: "Motion sensor",
+  motionMoving: "moving",
+  motionStill: "still",
+  steps: "Steps",
+  stepsEstimate: "≈ {value} m estimated from steps",
+  motionNoGps:
+    "The sensor detects movement, but GPS does not confirm it. Go to an open area and check that location is set to precise.",
 };
