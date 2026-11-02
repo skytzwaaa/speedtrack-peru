@@ -25,6 +25,9 @@ export function watchGps(
           onError();
           return;
         }
+        // Con solo ubicación aproximada Android entrega precisión de cientos de
+        // metros y el filtro descarta todo: se avisa en vez de fallar en silencio.
+        if (permission.location !== "granted") onError();
         watchId = await Geolocation.watchPosition(
           {
             enableHighAccuracy: true,

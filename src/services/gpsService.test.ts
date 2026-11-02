@@ -61,3 +61,14 @@ it("denied native permissions report failure without crashing", async () => {
   expect(error).toHaveBeenCalledOnce();
   expect(api.watchPosition).not.toHaveBeenCalled();
 });
+it("approximate-only permission warns but keeps watching", async () => {
+  api.requestPermissions.mockResolvedValue({
+    location: "prompt",
+    coarseLocation: "granted",
+  });
+  const error = vi.fn();
+  watchGps(vi.fn(), error);
+  await flush();
+  expect(error).toHaveBeenCalledOnce();
+  expect(api.watchPosition).toHaveBeenCalledOnce();
+});
