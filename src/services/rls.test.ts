@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { generateDemo } from "../data/demo";
+import { fixtureSession } from "../test/fixtures";
 import { importActivity } from "./activityRepository";
 it("executes the migration and isolates all tables and atomic RPC across two users", async () => {
   const db = new PGlite();
@@ -26,7 +26,7 @@ it("executes the migration and isolates all tables and atomic RPC across two use
     await db.exec(
       `set role authenticated; set request.jwt.claim.sub='${alice}';`,
     );
-    const a = { ...generateDemo("vehicle"), user_id: alice };
+    const a = { ...fixtureSession("vehicle"), user_id: alice };
     await db.query("select public.save_activity($1::jsonb)", [
       JSON.stringify(a),
     ]);

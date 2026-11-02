@@ -13,13 +13,13 @@ Revisión desde `77c03d1`, exclusivamente en `feature/speedtrack-v2`. El reposit
 | Supabase/Auth por usuario | Implementado: registro, acceso, recuperación, sesión persistente, perfil y separación de cuentas; contratos probados en navegador | Configurar un proyecto real y probar correos, refresh y acceso desde dos dispositivos |
 | Persistencia e historial en BD | Implementado: RPC transaccional, RLS en todas las tablas, caché, cola y reintentos; SQL ejecutado con dos identidades en PGlite | Aplicar migración al proyecto Supabase y verificar allí aislamiento y sincronización |
 | GPS real y precisión | Implementado: adaptadores web/nativo, límites por modo, precisión, suavizado, pausas y cortes | Validar precisión y permisos en teléfono, en exteriores |
-| Caminar, correr, bicicleta, vehículo y simulación | Completos en código; demo, pausa, finalización e historial probados | Prueba física de cada modo |
+| Caminar, correr, bicicleta y vehículo | Completos en código; GPS emulado, pausa, finalización e historial probados | Prueba física de cada modo |
 | Mapa, ubicación, destino y rutas | Mapa y selección implementados; perfiles por modo y errores comprobados con proveedor simulado | Clave de OpenRouteService para rutas y búsqueda reales |
 | ETA dinámico | Implementado; pruebas de velocidad filtrada, parada, pérdida de señal y nueva ventana tras pausa | Contrastar con recorridos físicos |
 | Tráfico opcional | Adaptador y validación implementados; se informa indisponibilidad sin proveedor | Proveer proxy HTTPS que consulte datos reales; no hay servicio desplegado |
-| Estadísticas e historial | Implementados, con exclusión de demos y aislamiento por cuenta | Validación con historial real en Supabase |
+| Estadísticas e historial | Implementados, con aislamiento por cuenta | Validación con historial real en Supabase |
 | Capacitor/Android | Proyecto nativo y APK debug compilados en este entorno | Instalación y pruebas en teléfono; firma release si se quiere distribuir |
-| UX y optimización | Se conserva diseño, Física, voz, idiomas y demo; mapa diferido y cálculo de velocidad limitado a ventana reciente | Quechua sigue parcial; comprobar voces del WebView del teléfono |
+| UX y optimización | Se conserva diseño, Física, voz e idiomas; mapa diferido y cálculo de velocidad limitado a ventana reciente | Quechua sigue parcial; comprobar voces del WebView del teléfono |
 | Tests/build/documentación | Vitest, SQL/RLS, Playwright, TypeScript, ESLint y compilaciones web/Android | Validación externa con servicios configurados |
 
 ## Correcciones de esta continuación

@@ -49,7 +49,7 @@ export function DetailPage({
           <small>{t("distanceUnit")}</small>
         </strong>
         <span>
-          {duration(s.duration)} · {t(s.demo ? "simulated" : "realGps")}
+          {duration(s.duration)} · {t("realGps")}
         </span>
       </div>
       <div className="metric-grid card">

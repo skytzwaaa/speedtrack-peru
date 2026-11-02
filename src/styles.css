@@ -1612,7 +1612,7 @@ input[type="range"] {
   .live-activity.mode-vehicle
     .navigation-panel:has(.live-navigation)
     .map-canvas {
-    height: 200px;
+    height: 180px;
   }
   .live-activity .navigation-metrics .metric strong {
     font-size: 16px;

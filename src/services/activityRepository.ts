@@ -56,8 +56,11 @@ export function validSession(value: unknown): value is Session {
 }
 export function mergeSessions(remote: Session[], local: Session[]) {
   // Completed sessions are immutable. Local outbox entries win until acknowledged.
+  // Las actividades de demostración de versiones anteriores se ignoran.
   return [
-    ...new Map([...remote, ...local].map((s) => [s.id, s])).values(),
+    ...new Map(
+      [...remote, ...local].filter((s) => !s.demo).map((s) => [s.id, s]),
+    ).values(),
   ].sort((a, b) => Date.parse(b.start_time) - Date.parse(a.start_time));
 }
 const key = (owner: string) => `speedtrack.outbox.${owner}`;
@@ -65,7 +68,7 @@ export function pendingSessions(owner: string): Session[] {
   try {
     const rows: unknown = JSON.parse(localStorage.getItem(key(owner)) || "[]");
     return Array.isArray(rows)
-      ? rows.filter(validSession).filter((s) => s.user_id === owner)
+      ? rows.filter(validSession).filter((s) => !s.demo && s.user_id === owner)
       : [];
   } catch {
     return [];

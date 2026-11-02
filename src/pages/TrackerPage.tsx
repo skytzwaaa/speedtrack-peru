@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import type { ActivityType, Session, Settings, NavigationPlan } from "../types";
 import { useI18n } from "../i18n";
-import { PageHeading, Metric, Section, Toggle } from "../components/ui";
+import { PageHeading, Metric, Section } from "../components/ui";
 import { SpeedChart } from "../components/SpeedChart";
 import { RouteMap } from "../components/RouteMap";
 import { Splits } from "../components/Splits";
@@ -37,7 +37,6 @@ interface Props {
   setLimit: (v: number) => void;
   start: (
     type: ActivityType,
-    demo: boolean,
     goal: number | null,
     navigation?: NavigationPlan,
   ) => void;
@@ -63,13 +62,12 @@ export function TrackerPage({
 }: Props) {
   const { t, language } = useI18n();
   const [type, setType] = useState<ActivityType>("run"),
-    [demo, setDemo] = useState(false),
     [goal, setGoal] = useState("");
   const [navigation, setNavigation] = useState<NavigationPlan>();
   const s =
     session && (session.type === "vehicle") === vehicle ? session : null;
   const current = s?.measurements.at(-1),
-    stale = !s?.demo && !!current && (s?.duration ?? 0) - current.elapsed > 10,
+    stale = !!current && (s?.duration ?? 0) - current.elapsed > 10,
     speed = paused || stale || waitingFix ? 0 : (current?.speed ?? 0),
     status = classifySpeedStatus(speed, s?.limit ?? settings.speed_limit);
   const cycling = (s?.type ?? type) === "bike";
@@ -154,17 +152,15 @@ export function TrackerPage({
                 </div>
               </label>
             )}
-            <Toggle label={t("demo")} checked={demo} onChange={setDemo} />
             <div className="notice">
               <Radio size={16} />
-              <p>{t(demo ? "demoInfo" : "gpsInfo")}</p>
+              <p>{t("gpsInfo")}</p>
             </div>
             <button
               className="primary-button"
               onClick={() =>
                 start(
                   vehicle ? "vehicle" : type,
-                  demo,
                   goal && Number(goal) > 0 && Number(goal) <= 500
                     ? Number(goal)
                     : null,
@@ -188,10 +184,8 @@ export function TrackerPage({
           </Section>
           <div className="preview-orbit">
             <Navigation size={32} />
-            <span>
-              {t(demo ? (vehicle ? "demoVehicle" : "demoSport") : "realGps")}
-            </span>
-            <small>{t(demo ? "endDemo" : "gpsInfo")}</small>
+            <span>{t("realGps")}</span>
+            <small>{t("gpsInfo")}</small>
           </div>
         </>
       ) : (
@@ -199,14 +193,14 @@ export function TrackerPage({
           <div className="tracker-status">
             <span className={`pill ${paused ? "paused-pill" : ""}`}>
               <span className="live-dot" />
-              {t(s.demo ? "simulated" : "realGps")}
+              {t("realGps")}
             </span>
             <span>
-              {t(s.demo ? "simulatedTime" : "time")} {duration(s.duration)}
+              {t("time")} {duration(s.duration)}
             </span>
           </div>
           {stale && <p className="notice">{t("gpsLost")}</p>}
-          {s && !s.demo && motion.supported && (
+          {s && motion.supported && (
             <p className="muted">
               {t("motionSensor")}:{" "}
               {t(motion.moving ? "motionMoving" : "motionStill")}
@@ -221,15 +215,11 @@ export function TrackerPage({
               )}
             </p>
           )}
-          {s &&
-            !s.demo &&
-            motion.supported &&
-            motion.moving &&
-            (stale || waitingFix) && (
-              <p className="notice" role="status">
-                {t("motionNoGps")}
-              </p>
-            )}
+          {s && motion.supported && motion.moving && (stale || waitingFix) && (
+            <p className="notice" role="status">
+              {t("motionNoGps")}
+            </p>
+          )}
           {(gpsAccuracy ?? current?.accuracy) != null && (
             <p className="muted">
               {t("accuracy")}: ±{" "}
@@ -246,7 +236,7 @@ export function TrackerPage({
               <p>{t("locationUnavailable")}</p>
             </div>
           )}
-          {!s.demo && !s.measurements.length && !gpsError && (
+          {!s.measurements.length && !gpsError && (
             <p className="notice" role="status">
               {t("gpsWaiting")}
             </p>

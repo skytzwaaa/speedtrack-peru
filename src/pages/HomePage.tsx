@@ -32,7 +32,6 @@ export function HomePage({
   const weekly = sessions
     .filter(
       (s) =>
-        !s.demo &&
         s.type !== "vehicle" &&
         new Date(s.start_time) >= start &&
         new Date(s.start_time) <= now,
@@ -128,7 +127,7 @@ export function HomePage({
         <div>
           <span>{t("sessions")}</span>
           <strong>
-            {sessions.filter((s) => !s.demo).length}
+            {sessions.length}
             <small>{t("history")}</small>
           </strong>
         </div>
@@ -136,13 +135,7 @@ export function HomePage({
           <span>{t("recentMax")}</span>
           <strong>
             {number(
-              Math.max(
-                0,
-                ...sessions
-                  .filter((s) => !s.demo)
-                  .slice(0, 7)
-                  .map((s) => s.max_speed),
-              ),
+              Math.max(0, ...sessions.slice(0, 7).map((s) => s.max_speed)),
               language,
               0,
             )}

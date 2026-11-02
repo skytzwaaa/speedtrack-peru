@@ -107,10 +107,7 @@ export function SessionCard({
         <TypeIcon type={session.type} />
       </span>
       <span className="session-content">
-        <strong>
-          {t(session.type)}
-          {session.demo && <small> · {t("simulated")}</small>}
-        </strong>
+        <strong>{t(session.type)}</strong>
         <small>{date(session.start_time, language)}</small>
         <span>
           <b>

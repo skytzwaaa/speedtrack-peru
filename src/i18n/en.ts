@@ -77,7 +77,7 @@ export const en: Record<keyof typeof es, string> = {
   finishBeforeAccount: "Finish the activity before changing accounts.",
   importLocal: "Import my local activities",
   importInfo:
-    "Imports only real activities from this device into this account. Excludes examples and simulations. Use only if these activities belong to you.",
+    "Imports only real activities from this device into this account. Use only if these activities belong to you.",
   syncing: "Syncing…",
   synced: "History synced",
   syncPending: "Sync pending · retry",
@@ -114,8 +114,7 @@ export const en: Record<keyof typeof es, string> = {
   total: "Real total",
   monthly: "This month",
   statistics: "Statistics",
-  realOnly:
-    "Real activities only. Demonstrations do not affect your statistics.",
+  realOnly: "Calculated from your recorded activities.",
   paceChart: "Pace vs. time",
   nearArrival: "You are close to your destination.",
   gpsLost: "GPS signal is stale. Waiting for a new measurement.",
@@ -123,7 +122,6 @@ export const en: Record<keyof typeof es, string> = {
   routeDistance: "Route distance",
   privacy: "Privacy",
   physicsFormula: "Average speed = total distance / active time",
-  simulation: "Simulation",
   greetUser: "Hello, {name}",
   settingsPending: "Preferences saved locally; sync pending.",
   app: "SpeedTrack Perú",
@@ -154,11 +152,6 @@ export const en: Record<keyof typeof es, string> = {
   goal: "Optional goal",
   noGoal: "No goal",
   goalUnit: "Goal in kilometers",
-  demo: "Use a demonstration route",
-  demoSport: "Sports demo",
-  demoVehicle: "Vehicle demo",
-  demoInfo:
-    "45 real seconds · journey time ×40 for sports and ×1 for vehicles. Simulated data.",
   gpsInfo:
     "Your location measures and draws the journey. Permission is requested when starting or centering the map. Keep the activity open: hiding it pauses recording.",
   start: "Start",
@@ -167,7 +160,6 @@ export const en: Record<keyof typeof es, string> = {
   finish: "Finish",
   active: "Moving",
   paused: "Paused",
-  simulated: "Demonstration",
   realGps: "Live GPS",
   time: "Time",
   distance: "Distance",
@@ -242,10 +234,8 @@ export const en: Record<keyof typeof es, string> = {
   uncertaintyDesc:
     "GPS, sampling and surroundings affect estimates. Phone measurements are approximations.",
   accuracy: "Estimated GPS accuracy",
-  simulatedAccuracy: "Not applicable · simulated data",
   unknownAccuracy: "No measurement available",
   locationUnavailable: "Location unavailable.",
-  useDemo: "Use demonstration mode",
   config: "Settings",
   general: "General",
   language: "Language",
@@ -278,7 +268,7 @@ export const en: Record<keyof typeof es, string> = {
     "“SpeedTrack, how far have I gone?” · “Pause workout.” · “What is my speed?”",
   about: "About the project",
   aboutText:
-    "SpeedTrack Perú is an academic prototype developed for Physics I and Systems Engineering. It applies kinematic concepts to real and simulated journeys.",
+    "SpeedTrack Perú is an academic prototype developed for Physics I and Systems Engineering. It applies kinematic concepts to your real journeys.",
   disclaimer:
     "SpeedTrack Perú does not replace certified instruments, official traffic systems or professional measuring devices.",
   local: "Data saved on this device",
@@ -304,14 +294,11 @@ export const en: Record<keyof typeof es, string> = {
   accelerateVoice: "Hard acceleration detected.",
   timeVoice: "You have been active for thirty minutes.",
   bestVoice: "New best pace.",
-  endDemo: "The demonstration is saved automatically when it ends.",
   sessionActive:
     "A journey is active. Return to it using the bottom navigation.",
   gpsWaiting: "Searching for a GPS signal…",
   seed: "Preloaded example",
-  simulatedTime: "Simulated time",
   best: "Your progress starts here",
-  sampleLabel: "Example journeys",
   resetView: "Return home",
   motionSensor: "Motion sensor",
   motionMoving: "moving",

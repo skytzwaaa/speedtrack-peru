@@ -5,7 +5,7 @@ import { calculateAveragePace, calculateAverageSpeed } from "../utils/physics";
 import { Metric, Section } from "./ui";
 export function Statistics({ sessions }: { sessions: Session[] }) {
   const { t, language } = useI18n();
-  const real = sessions.filter((s) => !s.demo);
+  const real = sessions;
   const distance = real.reduce((a, s) => a + s.distance, 0),
     time = real.reduce((a, s) => a + s.duration, 0);
   const foot = real.filter((s) => s.type === "walk" || s.type === "run");

@@ -1,6 +1,6 @@
 # SpeedTrack Perú · V2
 
-Evolución del proyecto original de Física I: React + Vite + TypeScript, estilo oscuro/verde, actividad deportiva, movilidad y cinemática. Conserva la navegación, las demos, los idiomas, la voz y las pantallas de la V1. V2 fue integrada en `main` mediante el merge `8001ba6`; esta revisión continúa en `feature/speedtrack-mejoras-paralelas`.
+Evolución del proyecto original de Física I: React + Vite + TypeScript, estilo oscuro/verde, actividad deportiva, movilidad y cinemática. Conserva la navegación, los idiomas, la voz y las pantallas de la V1. V2 fue integrada en `main` mediante el merge `8001ba6`; esta revisión continúa en `feature/speedtrack-mejoras-paralelas`.
 
 ## Ejecutar
 
@@ -32,7 +32,7 @@ En Windows, si PowerShell bloquea `npm.ps1`, usar `npm.cmd` y `npx.cmd`. No es n
 - Caminar y correr: ritmo, duración activa, distancia, velocidad, splits interpolados por kilómetro y gráfico de ritmo.
 - Bicicleta: velocidad actual/promedio/máxima, recorrido y ETA según velocidad reciente.
 - Vehículo: velocidad, aceleración escalar, frenadas, eventos, límite configurable y navegación. El límite es una referencia del usuario, no información vial oficial.
-- Simulación de los cuatro modos: 45 segundos reales; deporte representa 30 minutos. Las demos se identifican y se excluyen de las estadísticas reales.
+- Solo datos reales: no hay modo demo ni recorridos de ejemplo. Todo lo que se muestra viene del GPS y del sensor de movimiento del teléfono. Las actividades de demostración que hayan guardado versiones anteriores se ignoran.
 - Mapa mundial MapLibre + OpenFreeMap/OSM: calles, punto X, destino Y, seguimiento, centrar, ruta realizada y ruta prevista.
 - Registro, login, logout, recuperación de contraseña, sesión persistente, nombre de perfil y preferencias mediante Supabase.
 - Historial separado por usuario, estadísticas totales, últimos siete días y mes actual, con actividades por tipo.
@@ -65,7 +65,7 @@ La recuperación envía un enlace; al abrirlo en la web, la aplicación permite 
 
 ### Local, caché y sincronización
 
-- Invitado: conserva `speedtrack.sessions.v1` y sus ejemplos existentes.
+- Invitado: conserva `speedtrack.sessions.v1` (sin ejemplos; se ignoran las demos de versiones anteriores).
 - Autenticado: caché, borrador, preferencias y cola de subida usan claves con el ID del propietario. Un cambio de cuenta desmonta el espacio de trabajo anterior.
 - Primero se muestra la caché; después se sincroniza con Supabase. Hay reintentos al recuperar conexión, cada minuto y con el indicador de sincronización.
 - El botón de Perfil **Importar mis recorridos locales** importa solo actividades reales y completas. Es explícito para evitar atribuir a una cuenta datos de otra persona que haya usado el dispositivo. Se conservan los originales y no se importan demos.
@@ -77,7 +77,7 @@ La recuperación envía un enlace; al abrirlo en la web, la aplicación permite 
 
 ## GPS y Física
 
-Se pide ubicación al iniciar un recorrido real o al pulsar centrar mapa; una demo no requiere permiso. En web hace falta **HTTPS o localhost**. La IP HTTP del PC abierta desde otro teléfono no suele ser un contexto seguro.
+Se pide ubicación al iniciar un recorrido real o al pulsar centrar mapa. En web hace falta **HTTPS o localhost**. La IP HTTP del PC abierta desde otro teléfono no suele ser un contexto seguro.
 
 Unidades internas: kilómetros, segundos activos, km/h y m/s².
 
@@ -195,7 +195,7 @@ npm audit
 
 - Vitest verifica física, filtros, conversiones, ritmo, ETA, perfiles de rutas, validación, cachés aisladas, cola y reintentos.
 - PGlite ejecuta la migración SQL real con roles simulados `authenticated`/`anon` y dos identidades; comprueba RLS, FK y RPC idempotente. No sustituye comprobar el proyecto Supabase desplegado y sus ajustes Auth/SMTP.
-- Playwright prueba demo, pausa, guardado, idiomas, GPS emulado y recuperación, cambio de cuentas y routing. Supabase/routing se simulan en estas pruebas; no prueban envío de correos reales ni facturación/credenciales de APIs.
+- Playwright prueba pausa, guardado, idiomas, GPS emulado y recuperación, cambio de cuentas y routing. Supabase/routing se simulan en estas pruebas; no prueban envío de correos reales ni facturación/credenciales de APIs.
 - La cartografía pública también se revisó en Chromium con coordenadas emuladas, sin errores JavaScript.
 - El build puede advertir del tamaño del módulo MapLibre, que se descarga únicamente al abrir un mapa.
 - Unidades métricas en esta versión; no hay avatar subido, giro a giro, mapas descargables, comandos de voz ni seguimiento continuo con pantalla apagada. Son extensiones futuras, no funciones anunciadas como disponibles.

@@ -53,11 +53,9 @@ export function PhysicsPanel({ session }: { session: Session }) {
         ))}
         <div className="notice">
           {t("accuracy")}:{" "}
-          {session.demo
-            ? t("simulatedAccuracy")
-            : accuracy != null
-              ? `± ${Math.round(accuracy)} ${t("meter")}`
-              : t("unknownAccuracy")}
+          {accuracy != null
+            ? `± ${Math.round(accuracy)} ${t("meter")}`
+            : t("unknownAccuracy")}
         </div>
       </div>
     </details>

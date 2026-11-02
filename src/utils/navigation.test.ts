@@ -9,7 +9,7 @@ import {
   userEta,
 } from "./navigation";
 import { navigationForMode, routingProfile } from "../services/routingService";
-import { generateDemo } from "../data/demo";
+import { fixtureSession } from "../test/fixtures";
 const point = (
   timestamp: number,
   longitude = 0,
@@ -85,13 +85,13 @@ describe("routing and dynamic ETA", () => {
     ).toBe(true);
   });
   it("waits for samples and expires the estimate after signal loss", () => {
-    const m = generateDemo("vehicle").measurements.slice(0, 10);
+    const m = fixtureSession("vehicle").measurements.slice(0, 10);
     expect(recentSpeed(m.slice(0, 2), 1)).toBe(0);
     expect(recentSpeed(m, 9)).toBeGreaterThan(0);
     expect(recentSpeed(m, 30)).toBe(0);
   });
   it("requires fresh samples after a pause or GPS break", () => {
-    const samples = generateDemo("vehicle")
+    const samples = fixtureSession("vehicle")
       .measurements.slice(0, 6)
       .map((m, i) => ({
         ...m,

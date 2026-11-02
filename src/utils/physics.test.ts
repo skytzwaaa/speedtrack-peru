@@ -8,9 +8,8 @@ import {
   calculatePace,
   classifySpeedStatus,
 } from "./physics";
-import { generateDemo } from "../data/demo";
+import { fixtureSession } from "../test/fixtures";
 import { dictionaries } from "../i18n";
-import { seedSessions } from "../data/seed";
 describe("kinematics and sessions", () => {
   it("uses compatible units and guards zero division", () => {
     expect(calculateAverageSpeed(5, 1800)).toBe(10);
@@ -36,7 +35,7 @@ describe("kinematics and sessions", () => {
     expect(classifySpeedStatus(51, 50)).toBe("over");
   });
   it("sports demo integrates speed and interpolates full splits", () => {
-    const s = generateDemo("run");
+    const s = fixtureSession("run");
     expect(s.duration).toBe(1800);
     expect(s.distance).toBeGreaterThan(4);
     expect(s.splits.length).toBe(Math.floor(s.distance));
@@ -46,7 +45,7 @@ describe("kinematics and sessions", () => {
     expect(s.measurements.at(-1)?.speed).toBe(0);
   });
   it("vehicle demo includes acceleration braking and overspeed", () => {
-    const s = generateDemo("vehicle");
+    const s = fixtureSession("vehicle");
     expect(s.duration).toBe(45);
     expect(s.events.some((e) => e.type === "accelerate")).toBe(true);
     expect(s.events.some((e) => e.type === "brake")).toBe(true);
@@ -59,17 +58,5 @@ describe("kinematics and sessions", () => {
     expect(Object.keys(dictionaries.en).sort()).toEqual(
       Object.keys(dictionaries.es).sort(),
     );
-  });
-  it("preloaded distances and maxima agree with their measurements", () => {
-    const sessions = seedSessions();
-    expect(sessions.map((s) => s.distance)).toEqual([
-      expect.closeTo(5.02, 6),
-      expect.closeTo(18.7, 6),
-      expect.closeTo(12.3, 6),
-    ]);
-    for (const s of sessions) {
-      expect(s.max_speed).toBe(Math.max(...s.measurements.map((m) => m.speed)));
-      expect(s.avg_speed).toBeCloseTo((s.distance / s.duration) * 3600);
-    }
   });
 });

@@ -1,5 +1,7 @@
+// Datos sintéticos SOLO para pruebas automáticas. La app no los importa.
 import type { ActivityType, Session } from "../types";
 import { addMeasurement, calculateAcceleration } from "../utils/physics";
+import { newSession } from "../utils/session";
 export const DEMO_SECONDS = 45;
 export const demoScale = (type: ActivityType) => (type === "vehicle" ? 1 : 40);
 export function demoSpeed(type: ActivityType, second: number) {
@@ -30,33 +32,6 @@ export function demoSpeed(type: ActivityType, second: number) {
   const ramp = Math.min(1, second / 4, (45 - second) / 4);
   return Math.max(0, (base + Math.sin(second * 0.7) * 0.6) * ramp);
 }
-export function newSession(
-  type: ActivityType,
-  demo: boolean,
-  limit: number,
-  goal: number | null,
-): Session {
-  return {
-    id: crypto.randomUUID(),
-    user_id: "local-user",
-    type,
-    demo,
-    limit,
-    goal,
-    start_time: new Date().toISOString(),
-    end_time: null,
-    distance: 0,
-    duration: 0,
-    avg_speed: 0,
-    max_speed: 0,
-    max_acceleration: 0,
-    max_deceleration: 0,
-    above_limit: 0,
-    measurements: [],
-    events: [],
-    splits: [],
-  };
-}
 export function demoMeasurement(session: Session, second: number) {
   const previous = session.measurements.at(-1);
   const elapsed = second * demoScale(session.type),
@@ -77,8 +52,8 @@ export function demoMeasurement(session: Session, second: number) {
     distance,
   };
 }
-export function generateDemo(type: ActivityType) {
-  let s = newSession(type, true, 50, null);
+export function fixtureSession(type: ActivityType) {
+  let s = newSession(type, 50, null);
   for (let i = 0; i <= 45; i++) s = addMeasurement(s, demoMeasurement(s, i));
   return { ...s, end_time: new Date().toISOString() };
 }

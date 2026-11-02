@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { storageService } from "./storageService";
 import { watchGps } from "./gpsService";
 import { hasCompatibleVoice, setVoiceLanguage, speak } from "./voiceService";
-import { generateDemo } from "../data/demo";
+import { fixtureSession } from "../test/fixtures";
 
 afterEach(() => vi.unstubAllGlobals());
 describe("local persistence", () => {
@@ -15,13 +15,13 @@ describe("local persistence", () => {
     });
   });
   it("restores a saved journey with its measurements, events and splits", () => {
-    const session = generateDemo("run");
+    const session = fixtureSession("run");
     expect(storageService.saveSessions([session])).toBe(true);
     expect(storageService.loadSessions()).toEqual([session]);
   });
   it("recovers from malformed preferences and stored JSON", () => {
     data.set("speedtrack.sessions.v1", "invalid");
-    expect(storageService.loadSessions()).toHaveLength(3);
+    expect(storageService.loadSessions()).toEqual([]);
     data.set(
       "speedtrack.settings.v1",
       JSON.stringify({
@@ -43,7 +43,9 @@ describe("local persistence", () => {
         throw new Error("QuotaExceededError");
       },
     });
-    expect(storageService.saveSessions([generateDemo("vehicle")])).toBe(false);
+    expect(storageService.saveSessions([fixtureSession("vehicle")])).toBe(
+      false,
+    );
   });
 });
 describe("optional device APIs", () => {

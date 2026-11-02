@@ -1,15 +1,15 @@
 import { expect, it } from "vitest";
-import { generateDemo } from "../data/demo";
+import { fixtureSession } from "../test/fixtures";
 import { calculateSplit } from "./physics";
 import { thin } from "../services/draftService";
 it("incremental splits match a full recalculation", () => {
   for (const type of ["run", "bike", "walk"] as const) {
-    const s = generateDemo(type);
+    const s = fixtureSession(type);
     expect(s.splits).toEqual(calculateSplit(s.measurements, s.id));
   }
 });
 it("draft thinning keeps first, last and breaks while bounding size", () => {
-  const s = generateDemo("run");
+  const s = fixtureSession("run");
   const many = Array.from({ length: 7200 }, (_, i) => ({
     ...s.measurements[1],
     id: `m${i}`,

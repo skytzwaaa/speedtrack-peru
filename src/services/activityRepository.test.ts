@@ -8,7 +8,7 @@ import {
   importActivity,
 } from "./activityRepository";
 import { storageService } from "./storageService";
-import { generateDemo } from "../data/demo";
+import { fixtureSession } from "../test/fixtures";
 const mock = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
 vi.mock("./supabase", () => ({ supabase: mock }));
 describe("private offline history", () => {
@@ -23,16 +23,16 @@ describe("private offline history", () => {
     mock.from.mockReset();
   });
   it("keeps accounts and the V1 guest history separate", () => {
-    const a = { ...generateDemo("run"), user_id: "alice" };
+    const a = { ...fixtureSession("run"), user_id: "alice" };
     storageService.saveSessions([a], "alice");
     enqueue(a);
     expect(storageService.loadSessions("bob")).toEqual([]);
     expect(pendingSessions("bob")).toEqual([]);
-    expect(storageService.loadSessions()).toHaveLength(3);
+    expect(storageService.loadSessions()).toEqual([]);
     expect(pendingSessions("alice")).toEqual([a]);
   });
   it("merges idempotently and preserves pending local activities", () => {
-    const a = generateDemo("bike");
+    const a = fixtureSession("bike");
     const b = { ...a, distance: a.distance + 1 };
     expect(mergeSessions([a], [b])).toEqual([b]);
     expect(mergeSessions([a], [a])).toHaveLength(1);
@@ -45,14 +45,14 @@ describe("private offline history", () => {
     ).toBe(false);
   });
   it("retains outbox entries after a failed upload", async () => {
-    const a = { ...generateDemo("run"), user_id: "alice" };
+    const a = { ...fixtureSession("run"), user_id: "alice" };
     enqueue(a);
     mock.rpc.mockResolvedValue({ error: new Error("offline") });
     await expect(synchronize("alice")).rejects.toThrow("offline");
     expect(pendingSessions("alice")).toEqual([a]);
   });
   it("imports idempotently with separate primary keys for every owner", async () => {
-    const original = generateDemo("vehicle");
+    const original = fixtureSession("vehicle");
     const snapshot = structuredClone(original);
     const alice = await importActivity(original, "alice");
     const bob = await importActivity(original, "bob");
@@ -68,7 +68,7 @@ describe("private offline history", () => {
     expect(original).toEqual(snapshot);
   });
   it("ignores corrupt rows without losing other cached activities", () => {
-    const session = { ...generateDemo("run"), user_id: "alice" };
+    const session = { ...fixtureSession("run"), user_id: "alice" };
     for (const field of ["measurements", "splits", "events"] as const) {
       const invalid = { ...session, [field]: [null] };
       expect(validSession(invalid)).toBe(false);
@@ -80,9 +80,9 @@ describe("private offline history", () => {
     }
   });
   it("removes only acknowledged entries and reads cloud history", async () => {
-    const a = { ...generateDemo("run"), user_id: "alice" };
+    const a = { ...fixtureSession("run"), user_id: "alice" };
     enqueue(a);
-    const b = { ...generateDemo("bike"), user_id: "alice" };
+    const b = { ...fixtureSession("bike"), user_id: "alice" };
     mock.rpc.mockImplementation(async () => {
       enqueue(b);
       return { error: null };

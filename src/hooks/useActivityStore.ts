@@ -86,7 +86,7 @@ export function useActivityStore(owner: string) {
     for (const s of storageService
       .loadSessions()
       .filter(validSession)
-      .filter((s) => !s.demo && s.end_time))
+      .filter((s) => s.end_time))
       try {
         // Preserve IDs of imports made by earlier versions for this account.
         const existing = current.current.find((x) => x.id === s.id);

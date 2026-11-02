@@ -1,6 +1,5 @@
 import type { Session, Settings, User } from "../types";
 import { validSession } from "./activityRepository";
-import { seedSessions } from "../data/seed";
 export const defaultSettings: Settings = {
   id: "local-settings",
   user_id: "local-user",
@@ -30,9 +29,8 @@ export const storageService = {
         ? "speedtrack.sessions.v1"
         : `speedtrack.sessions.${owner}`,
     );
-    if (!Array.isArray(data))
-      return owner === "local-user" ? seedSessions() : [];
-    const valid = data.filter(validSession);
+    if (!Array.isArray(data)) return [];
+    const valid = data.filter(validSession).filter((s) => !s.demo);
     return owner === "local-user"
       ? valid
       : valid.filter((s) => s.user_id === owner);
