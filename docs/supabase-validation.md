@@ -35,4 +35,4 @@ Proyecto: `hpcpikyxntyvpynzcvyt`. Rama: `feature/speedtrack-v2`.
 
 ## Repetir
 
-Ver comandos en README y `scripts/validate-supabase.mjs --linked`. La clave administrativa se obtiene de la CLI en memoria para preparación y limpieza, nunca se agrega a `.env`, al frontend, al APK ni a Git. `.env`, APK y estado temporal de la CLI están ignorados.
+Ver comandos en README y `scripts/validate-supabase.mjs --linked`. El script exige `SPEEDTRACK_TEST_PROJECT_REF` igual al proyecto enlazado, para no ejecutarse nunca contra el proyecto con cuentas reales. La clave administrativa se obtiene de la CLI en memoria para preparación y limpieza, nunca se agrega a `.env`, al frontend, al APK ni a Git. `.env`, APK y estado temporal de la CLI están ignorados.

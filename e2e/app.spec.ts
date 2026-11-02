@@ -695,6 +695,14 @@ test("live GPS rejects noise and gaps, preserves destination and track through p
       (m: { break_before?: boolean }) => m.break_before,
     ),
   ).toHaveLength(2);
+  // El resumen pinta el gráfico de verdad: superficie, área y curva trazada.
+  const chart = page.locator(".chart");
+  await expect(chart.locator("svg.recharts-surface")).toBeVisible();
+  await expect(chart.locator("path.recharts-area-area")).toHaveCount(1);
+  await expect(chart.locator("path.recharts-area-curve")).toHaveAttribute(
+    "d",
+    /^M[\d.]+,[\d.]+/,
+  );
 });
 
 test("Quechua covers account, navigation, activity and history without Spanish inheritance", async ({

@@ -29,6 +29,27 @@ describe("complete language contracts", () => {
   it("Quechua is explicit rather than a spread of Spanish", () => {
     expect(readFileSync("src/i18n/qu.ts", "utf8")).not.toContain("...es");
   });
+  it("every key is referenced by the app or built dynamically", () => {
+    // Keys assembled at runtime (PhysicsPanel renders `${concept}Desc`).
+    const dynamic =
+      /^(?:displacement|velocity|acceleration|mru|mruv|uncertainty)Desc$/;
+    const sources: string[] = [];
+    const walk = (folder: string) => {
+      for (const entry of readdirSync(folder, { withFileTypes: true })) {
+        const path = `${folder}/${entry.name}`;
+        if (entry.isDirectory()) {
+          if (path !== "src/i18n") walk(path);
+        } else if (/\.tsx?$/.test(path))
+          sources.push(readFileSync(path, "utf8"));
+      }
+    };
+    walk("src");
+    const code = sources.join("\n");
+    const unused = (Object.keys(dictionaries.es) as TranslationKey[]).filter(
+      (key) => !dynamic.test(key) && !new RegExp(`\\b${key}\\b`).test(code),
+    );
+    expect(unused).toEqual([]);
+  });
   it("UI JSX text contains only brands, symbols or scientific notation", () => {
     const allowed =
       /^(?:SpeedTrack|Perú|v = d \/ t|v = Δx \/ Δt|a = Δv \/ Δt|km\/h = m\/s × 3\.6|km \/|h ≈|km\/h|Y ·|· v2\.0)$/;

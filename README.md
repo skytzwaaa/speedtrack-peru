@@ -210,10 +210,10 @@ El APK debug se compiló con Java 21 y SDK 36, y su firma se verificó con `apks
 
 Resultados y límites de una validación anterior: [validación Supabase](docs/supabase-validation.md). La configuración incluida en cada APK depende de las variables presentes al compilar; sin ellas funciona en modo local.
 
-Con la CLI autenticada, el proyecto enlazado y `.env` apuntando al mismo proyecto:
+Con la CLI autenticada, el proyecto enlazado y `.env` apuntando al mismo proyecto. La prueba pide la clave `service_role` y crea y elimina usuarios, así que exige declarar aparte el proyecto desechable contra el que puede correr: si `SPEEDTRACK_TEST_PROJECT_REF` no coincide con el proyecto enlazado, aborta antes de tocar nada. Nunca usar aquí el proyecto que atiende cuentas reales.
 
 ```sh
-node scripts/validate-supabase.mjs --linked
+SPEEDTRACK_TEST_PROJECT_REF=<ref-del-proyecto-de-pruebas> node scripts/validate-supabase.mjs --linked
 ```
 
 Esta prueba crea dos usuarios temporales y elimina únicamente esos usuarios y sus datos al finalizar. Usa la clave administrativa de la CLI solo en memoria para preparar/confirmar/limpiar las cuentas; comprueba RLS usando la clave pública y los JWT de cada usuario. Verifica las seis tablas, aislamiento bidireccional, anon, escrituras ajenas, claves foráneas, rollback, reintentos, refresh, logout/login y recuperación.
@@ -222,6 +222,7 @@ Para incluir Chromium con el backend real, ejecutar primero `npm run build` y `n
 
 ```powershell
 $env:SPEEDTRACK_TEST_URL='http://127.0.0.1:4174'
+$env:SPEEDTRACK_TEST_PROJECT_REF='<ref-del-proyecto-de-pruebas>'
 node scripts/validate-supabase.mjs --linked
 ```
 
@@ -229,10 +230,29 @@ El navegador guarda una actividad y la recupera después de logout, borrado de c
 
 `pages/` y `components/` conservan las pantallas originales. `useSession` administra el ciclo de tracking y los avisos; `GpsFilter` filtra las muestras; `useActivityStore` coordina caché/outbox/nube; `useSettings` sincroniza preferencias; `useAuth` usa Supabase Auth. Servicios independientes aíslan GPS, routing, tráfico, voz, borradores y almacenamiento. Diccionarios tipados viven en `src/i18n`.
 
-No subir `.env`, `node_modules`, `dist`, APK, cachés, `local.properties` ni claves. Sí versionar migraciones, lockfile, proyecto Android y su wrapper. Comprobar las ramas del equipo antes de integrar cambios y publicar esta revisión únicamente en `origin/feature/speedtrack-mejoras-paralelas`.
+No subir `.env`, `node_modules`, `dist`, APK, cachés, `local.properties` ni claves. Sí versionar migraciones, lockfile, proyecto Android y su wrapper. Comprobar las ramas del equipo antes de integrar cambios y publicar esta revisión únicamente en `origin/arreglos`.
 
 Referencias oficiales: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Supabase Auth](https://supabase.com/docs/guides/auth/passwords), [OpenFreeMap](https://openfreemap.org/quick_start/), [MapLibre](https://maplibre.org/maplibre-gl-js/docs/), [Capacitor](https://capacitorjs.com/docs/getting-started/environment-setup), [Geolocation](https://capacitorjs.com/docs/apis/geolocation), [OpenRouteService](https://openrouteservice.org/).
 
 ## Cuentas sin código de verificación
 
 El registro con correo y contraseña guarda la cuenta en Supabase Auth. Para que **no** se envíe correo de verificación, desactivar "Confirm email" en el panel de Supabase (Authentication > Sign In / Providers > Email). Con eso `signUp` devuelve la sesión y la app inicia sesión de inmediato; si el proyecto sigue exigiendo confirmación, la app muestra "Revisa tu correo". Compromiso: sin verificación cualquiera puede registrar un correo ajeno; la recuperación de contraseña sigue usando correo.
+
+## Estado de dependencias y pendientes conocidos
+
+Actualizado en la rama `arreglos`:
+
+- Dependencias de producción sin avisos de seguridad: `npm audit --omit=dev` reporta 0.
+- Recharts 3 (desde 2.15). Una prueba de navegador comprueba que el resumen pinta de verdad la superficie, el área y la curva, no solo el contenedor.
+- Capacitor CLI alineado con `@capacitor/core` y `@capacitor/android` (8.6.0); React 19.3.1, Vitest 5.1, lucide-react 1.x, Prettier y PGlite al día.
+- `tsc --noEmit` cubre ahora `e2e/`, `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`, `capacitor.config.ts` y `eslint.config.js`, no solo `src/`.
+- Una prueba falla si un diccionario acumula claves que nadie usa; las claves que se arman en tiempo de ejecución (`${concepto}Desc`) están declaradas en esa prueba.
+
+Pendiente, con el motivo:
+
+- `npm audit` informa 14 avisos moderados (`glob`, `minimatch`) que solo entran por herramientas de desarrollo: ESLint y la CLI de Capacitor. No viajan en la web ni en el APK. Cerrarlos exige ESLint 10, que obliga a `eslint-plugin-react-hooks` 7; ese plugin añade reglas del compilador de React y marca 9 puntos: `WorldMap.tsx` 176, 340, 452, 465, 633, 648, `useAuth.tsx` 76, `useMotion.ts` 14 y `useSettings.ts` 53 (`setState` dentro de un efecto y `Date.now()` durante el render). Corregirlos toca el mapa en vivo, que no se ha probado en un teléfono real, así que la subida queda para después de esa prueba.
+- TypeScript 7 no se adopta: `typescript-eslint` 8 declara compatibilidad hasta `<6.1.0`.
+- Los umbrales del sensor de movimiento (paso y umbral de quietud) están puestos a ojo; faltan medidas en un teléfono real para calibrarlos.
+- El exceso de distancia con ruido GPS se reduce pero no desaparece; es anterior a esta rama.
+- Los textos en quechua son un borrador que debe revisar una persona hablante.
+- Sin verificar en dispositivo real ni en un despliegue: GPS en exterior, pasos, voz, enlaces profundos, CSP de `vercel.json` y el registro contra el proyecto Supabase.
