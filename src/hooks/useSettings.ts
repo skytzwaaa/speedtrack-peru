@@ -62,8 +62,10 @@ export function useSettings(owner: string) {
   useEffect(() => {
     // Remote reads must not schedule another remote read through setSettings.
     try {
-      if (localStorage.getItem(key) !== 'true') return;
-    } catch {return;}
+      if (localStorage.getItem(key) !== "true") return;
+    } catch {
+      return;
+    }
     const timer = window.setTimeout(() => void sync(), 800);
     return () => window.clearTimeout(timer);
   }, [settings, sync, key]);

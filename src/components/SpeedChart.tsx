@@ -12,6 +12,19 @@ import { useId } from "react";
 import type { Session } from "../types";
 import { useI18n } from "../i18n";
 import { Section } from "./ui";
+const MAX_POINTS = 600;
+// Reduce a ≤600 puntos conservando el pico de cada tramo, para no pintar
+// miles de nodos SVG en actividades largas.
+function sample<T extends { speed: number }>(rows: T[]): T[] {
+  if (rows.length <= MAX_POINTS) return rows;
+  const size = Math.ceil(rows.length / MAX_POINTS);
+  const out: T[] = [];
+  for (let i = 0; i < rows.length; i += size) {
+    const bucket = rows.slice(i, i + size);
+    out.push(bucket.reduce((a, b) => (b.speed > a.speed ? b : a)));
+  }
+  return out;
+}
 export function SpeedChart({ session }: { session: Session }) {
   const { t } = useI18n();
   const foot = session.type === "run" || session.type === "walk";
@@ -29,7 +42,7 @@ export function SpeedChart({ session }: { session: Session }) {
       >
         <ResponsiveContainer width="100%" height={185}>
           <AreaChart
-            data={session.measurements.map((m) => ({
+            data={sample(session.measurements).map((m) => ({
               ...m,
               plotted: foot ? (m.speed >= 1 ? 60 / m.speed : null) : m.speed,
             }))}

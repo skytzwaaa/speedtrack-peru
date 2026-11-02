@@ -16,7 +16,7 @@ export const calculatePace = (speed: number) => (speed > 0 ? 3600 / speed : 0);
 export const calculateAveragePace = (distance: number, seconds: number) =>
   distance > 0 ? seconds / distance : 0;
 export const calculateMaxSpeed = (measurements: Measurement[]) =>
-  Math.max(0, ...measurements.map((m) => m.speed));
+  measurements.reduce((max, m) => Math.max(max, m.speed), 0);
 export const classifySpeedStatus = (
   speed: number,
   limit: number,
@@ -36,34 +36,44 @@ export function calculateDistance(
       Math.sin(dLon / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(Math.max(0, 1 - h)));
 }
+// Cruces de kilómetro entre dos muestras consecutivas. `existing` son los
+// splits ya calculados; el tiempo de cada uno se mide desde el cruce anterior.
+function splitsBetween(
+  a: Measurement,
+  b: Measurement,
+  existing: Split[],
+  sessionId: string,
+): Split[] {
+  const added: Split[] = [];
+  let previousCrossing = existing.reduce((sum, s) => sum + s.time, 0);
+  for (let km = existing.length + 1; km <= Math.floor(b.distance); km++) {
+    const fraction =
+      b.distance > a.distance
+        ? (km - a.distance) / (b.distance - a.distance)
+        : 1;
+    const crossing =
+      a.elapsed + Math.max(0, Math.min(1, fraction)) * (b.elapsed - a.elapsed);
+    const time = crossing - previousCrossing;
+    added.push({
+      id: `${sessionId}-split-${km}`,
+      session_id: sessionId,
+      kilometer: km,
+      time,
+      pace: time,
+    });
+    previousCrossing = crossing;
+  }
+  return added;
+}
 export function calculateSplit(
   measurements: Measurement[],
   sessionId: string,
 ): Split[] {
   const splits: Split[] = [];
-  let previousCrossing = 0;
-  for (let i = 1; i < measurements.length; i++) {
-    const a = measurements[i - 1],
-      b = measurements[i];
-    for (let km = splits.length + 1; km <= Math.floor(b.distance); km++) {
-      const fraction =
-        b.distance > a.distance
-          ? (km - a.distance) / (b.distance - a.distance)
-          : 1;
-      const crossing =
-        a.elapsed +
-        Math.max(0, Math.min(1, fraction)) * (b.elapsed - a.elapsed);
-      const time = crossing - previousCrossing;
-      splits.push({
-        id: `${sessionId}-split-${km}`,
-        session_id: sessionId,
-        kilometer: km,
-        time,
-        pace: time,
-      });
-      previousCrossing = crossing;
-    }
-  }
+  for (let i = 1; i < measurements.length; i++)
+    splits.push(
+      ...splitsBetween(measurements[i - 1], measurements[i], splits, sessionId),
+    );
   return splits;
 }
 export function addMeasurement(session: Session, m: Measurement): Session {
@@ -96,11 +106,18 @@ export function addMeasurement(session: Session, m: Measurement): Session {
     distance: m.distance,
     duration: m.elapsed,
     avg_speed: calculateAverageSpeed(m.distance, m.elapsed),
-    max_speed: calculateMaxSpeed(measurements),
+    max_speed: Math.max(session.max_speed, m.speed),
     max_acceleration: Math.max(session.max_acceleration, m.acceleration),
     max_deceleration: Math.max(session.max_deceleration, -m.acceleration),
     above_limit:
       session.above_limit + ((previous?.speed ?? 0) > session.limit ? dt : 0),
-    splits: calculateSplit(measurements, session.id),
+    // Incremental: solo los kilómetros cruzados por esta muestra (antes se
+    // recalculaba todo en cada muestra, O(n²) en actividades largas).
+    splits: previous
+      ? [
+          ...session.splits,
+          ...splitsBetween(previous, m, session.splits, session.id),
+        ]
+      : session.splits,
   };
 }

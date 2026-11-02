@@ -37,7 +37,8 @@ export const routingService: RoutingProvider = {
     if (!routingAvailable) throw new Error("routingUnavailable");
     const profile = routingProfile(mode);
     const base =
-      import.meta.env.VITE_ROUTING_URL || "https://api.heigit.org/openrouteservice";
+      import.meta.env.VITE_ROUTING_URL ||
+      "https://api.heigit.org/openrouteservice";
     const response = await providerFetch(
       `${base}/v2/directions/${profile}/geojson`,
       {

@@ -4,7 +4,10 @@ import { pace } from "../utils/formatters";
 import { Section } from "./ui";
 export function Splits({ session }: { session: Session }) {
   const { t } = useI18n();
-  const best = Math.min(...session.splits.map((s) => s.pace));
+  const best = session.splits.reduce(
+    (min, s) => (s.pace > 0 && s.pace < min ? s.pace : min),
+    Infinity,
+  );
   return (
     <Section title={t("splits")}>
       <div className="card splits">
@@ -15,7 +18,11 @@ export function Splits({ session }: { session: Session }) {
                 {t("km")} {s.kilometer}
               </span>
               <div className="split-track">
-                <i style={{ width: `${(best / s.pace) * 100}%` }} />
+                <i
+                  style={{
+                    width: `${s.pace > 0 && Number.isFinite(best) ? (best / s.pace) * 100 : 0}%`,
+                  }}
+                />
               </div>
               <strong>
                 {pace(s.pace)} <small>{t("paceUnit")}</small>

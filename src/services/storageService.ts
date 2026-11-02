@@ -65,7 +65,9 @@ export const storageService = {
       user_id: owner,
       units: "metric",
       voice_fallback:
-        s.voice_fallback === "es" || s.voice_fallback === "en" || s.voice_fallback === "off"
+        s.voice_fallback === "es" ||
+        s.voice_fallback === "en" ||
+        s.voice_fallback === "off"
           ? s.voice_fallback
           : "es",
       progress_alerts: s.progress_alerts === true,
