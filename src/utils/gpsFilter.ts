@@ -42,7 +42,10 @@ export class GpsFilter {
     this.speed = 0;
     this.instantaneous = 0;
   }
-  accept(p: GpsPoint, mode: ActivityType) {
+  // `still`: el acelerómetro dice que el teléfono no se mueve (undefined si no
+  // hay sensor). Evita sumar ruido de GPS estando quieto, sobre todo en
+  // teléfonos que reportan speed=0 siempre.
+  accept(p: GpsPoint, mode: ActivityType, still?: boolean) {
     if (this.mode !== mode) {
       this.reset();
       this.mode = mode;
@@ -103,7 +106,14 @@ export class GpsFilter {
       this.policy.noiseFloorM,
       Math.min(prev.accuracy, p.accuracy) * this.policy.noiseAccuracyFraction,
     );
+    // Quieto según el acelerómetro: un salto de GPS sin movimiento del teléfono
+    // es ruido. A pie siempre hay vibración al moverse; en bici y vehículo
+    // (marcha suave, poca vibración) solo se aplica a velocidades bajas.
+    const stillLimit =
+      mode === "walk" || mode === "run" ? 25 : mode === "bike" ? 10 : 4;
+    const motionStill = still === true && raw < stillLimit;
     const stationary =
+      motionStill ||
       (device !== null && device < this.policy.stationaryKmh) ||
       distance * 1000 < clearanceM;
     const rawSpeed = stationary ? 0 : raw; // v = accepted displacement / time
@@ -146,7 +156,11 @@ export class GpsFilter {
       : this.speed + alpha * (rawSpeed - this.speed);
     const acceleration = calculateAcceleration(this.speed, speed, sampleDt);
     if (Math.abs(acceleration) > maxA) return null;
-    if (!stationary || (device !== null && device < this.policy.stationaryKmh))
+    if (
+      !stationary ||
+      motionStill ||
+      (device !== null && device < this.policy.stationaryKmh)
+    )
       this.previous = p;
     this.lastSeen = p.timestamp;
     this.lastSample = p;

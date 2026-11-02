@@ -145,6 +145,7 @@ function Workspace({ owner }: { owner: string }) {
               gpsError={tracker.gpsError}
               gpsAccuracy={tracker.gpsAccuracy}
               waitingFix={tracker.waitingFix}
+              motion={tracker.motion}
               settings={settings}
               setLimit={(v) => updateSettings({ ...settings, speed_limit: v })}
               updateNavigation={tracker.updateNavigation}

@@ -132,4 +132,26 @@ describe("movement detection on real phones", () => {
       distance += f.accept(p(i, Math.sin(i) * 2, 0, 8), "walk")?.delta ?? 0;
     expect(distance).toBe(0);
   });
+  it("with the motion sensor reporting still, noise adds no distance even for speed=0 phones", () => {
+    const f = new GpsFilter();
+    let seed = 3;
+    const noise = () =>
+      ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296 - 0.5) *
+      12;
+    f.accept(p(0, 0, 0, 8), "walk", true);
+    let distance = 0;
+    for (let i = 1; i < 120; i++)
+      distance += f.accept(p(i, noise(), 0, 8), "walk", true)?.delta ?? 0;
+    expect(distance).toBe(0);
+  });
+  it("the still hint never blocks real movement (sensor says moving or absent)", () => {
+    for (const hint of [false, undefined]) {
+      const f = new GpsFilter();
+      f.accept(p(0, 0, 0, 10), "walk", hint);
+      let distance = 0;
+      for (let i = 1; i <= 60; i++)
+        distance += f.accept(p(i, i * 1.4, 0, 10), "walk", hint)?.delta ?? 0;
+      expect(distance).toBeGreaterThan(0.07);
+    }
+  });
 });

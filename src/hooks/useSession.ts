@@ -15,6 +15,7 @@ import {
 } from "../utils/physics";
 import { navigationForMode } from "../services/routingService";
 import { watchGps } from "../services/gpsService";
+import { useMotion } from "./useMotion";
 import { announceVoice, stopSpeaking } from "../services/voiceService";
 import { translate } from "../i18n";
 import { gpsPolicy, GpsFilter } from "../utils/gpsFilter";
@@ -31,6 +32,11 @@ export function useSession(
     [completed, setCompleted] = useState<Session | null>(null);
   const [waitingFix, setWaitingFix] = useState(false);
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const motion = useMotion(!!session && !session.demo && !paused, session?.id);
+  const motionRef = useRef(motion);
+  useEffect(() => {
+    motionRef.current = motion;
+  }, [motion]);
   const lastGpsWarning = useRef(-Infinity);
   const lastProgress = useRef(0);
   const [draftError, setDraftError] = useState(false);
@@ -256,7 +262,12 @@ export function useSession(
               lastGpsWarning.current = clock.current;
               announce("lowAccuracyVoice");
             }
-            const accepted = filter.current.accept(point, live.type);
+            const m = motionRef.current;
+            const accepted = filter.current.accept(
+              point,
+              live.type,
+              m.supported ? !m.moving : undefined,
+            );
             if (!accepted) return;
             setWaitingFix(false);
             commit(
@@ -368,6 +379,7 @@ export function useSession(
     gpsError,
     gpsAccuracy,
     waitingFix,
+    motion,
     completed,
     start,
     finish,
